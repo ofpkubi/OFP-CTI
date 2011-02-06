@@ -1,0 +1,25 @@
+; args: value
+
+_value = _this
+
+_amount = (_value % 100000)
+_value = _value - _amount
+
+_gi = (_value % (100000*18))/100000
+_value = _value - _gi*100000
+
+_si = _value/(100000*18)
+
+;player globalchat format["MsgMoneyStatus.sqs: _amount=%1, _si=%2, _gi=%3", _amount, _si, _gi]
+
+? _si == si0 || _si == si1 : goto "Set"
+"ERROR: _si not si0 or si1 in MsgMoneyChange.sqs" call fDebugLog
+exit
+
+#Set
+
+; ? (siPlayer == _si) && (giPlayer == _gi): player groupchat format ["You have $%1", _amount]
+
+? local LocalServerObject : Exit
+
+(groupMoneyMatrix select _si) set [_gi, _amount]

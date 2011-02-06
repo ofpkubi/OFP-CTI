@@ -1,0 +1,10 @@
+; args: [vehicle, gi, si]
+
+_vehicle = _this select 0
+_gi = _this select 1
+_si = _this select 2
+
+_value = _gi + 18*_si
+
+pvVehicleDetachedTugged = _vehicle; PublicVariable "pvVehicleDetachedTugged"
+pvVehicleDetached = _value; PublicVariable "pvVehicleDetached"

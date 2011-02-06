@@ -1,0 +1,13 @@
+; args: [vehicle]
+
+_vehicle = _this Select 0
+
+_pos = getPos _vehicle
+_vehicle setPos _pos
+
+;_vehicle setPos [-1000, -1000, 10]
+;_vehicle setVelocity [0, 0, 1]
+;~0.05
+;_vehicle setPos [_pos select 0, _pos select 1, 1]
+;_vehicle setVelocity [0,0,0]
+;player reveal _vehicle

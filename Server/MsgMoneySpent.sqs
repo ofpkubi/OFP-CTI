@@ -1,0 +1,19 @@
+#Start
+
+@(pvMoneySpent != -1)
+
+_value = pvMoneySpent
+
+pvMoneySpent = -1
+
+_amount = _value % 10000
+_value = _value - _amount
+
+_gi = (_value % (10000*18))/10000
+_value = _value - _gi*10000
+
+_si = _value/(10000*18)
+
+[_si, _gi, _amount] call funcMoneySpend
+
+goto "Start"

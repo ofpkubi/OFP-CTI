@@ -1,0 +1,14 @@
+;player globalchat "MsgBuildingInUse.sqs Entered"
+
+#Start
+
+@!(isNull pvBuildingInUse)
+
+_building = pvBuildingInUse
+pvBuildingInUse = objNull
+
+? !(_building in buildingsInUse): buildingsInUse = buildingsInUse + [_building]
+
+buildingsInUse = buildingsInUse - [objNull]
+
+goto "Start"

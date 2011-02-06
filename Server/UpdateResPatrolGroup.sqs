@@ -1,0 +1,92 @@
+; args: [unit, tanks, timePatrol]
+
+? !(local LocalServerObject) : exit
+_unit = _this select 0
+_unit disableAI "TARGET"; _unit disableAI "AUTOTARGET"; _unit disableAI "MOVE"
+~5
+
+_tanks = _this select 1
+_timePatrol = ([60*(_this select 2), 60] select dev)
+
+_timeDestroy = ([60*60, 10*60] select dev)
+
+_si = siRes
+_group = group _unit
+
+; DELETE UNIT AND POSSIBLE CREW
+_crew = crew _unit
+_i = 0
+_c = count _crew
+#CheckCrew
+  ? !(_i < _c) : goto "DeleteUnit"
+  _u = _crew select _i
+  _i = _i + 1
+
+  ? _u == _unit : goto "CheckCrew"
+  unassignVehicle _u 
+  _u action ["eject", _unit]
+  ~1
+  deleteVehicle _u  
+  goto "CheckCrew"
+#DeleteUnit
+~1
+deleteVehicle _unit
+
+? isNull _group : format["ERROR: _group is NULL for RES patrol group"] call fDebugLog; exit
+
+_list = groupMatrix select _si
+_list set [count _list, _group]
+_gi = [_group, _list] call funcGetIndex
+groupsPatrol set [count groupsPatrol, _group]
+
+@( !(isNull (mhq select si0)) && !(isNull (mhq select si1)) )
+
+#GenStartPos
+  ~0.01
+  _posStart = [posCenter, 0, 4000] call funcGetRandomPos
+  ? !([_posStart] call funcStartPos) : goto "GenStartPos"
+  ? ([_posStart, getPos (mhq select si0)] call funcDistH) < 1000 : goto "GenStartPos"
+  ? ([_posStart, getPos (mhq select si1)] call funcDistH) < 1000 : goto "GenStartPos"
+
+~10
+
+_i = 0
+#InitAddTank
+  _i = _i + 1
+  ? _i > _tanks : goto "TanksAdded"
+  _type = -1
+  while "_type == -1" do { _type = (armorTown select _si) call funcGetRandomUnitType }
+  _pos = [_posStart, 10, 20] call funcGetRandomPos
+  [_type, 1, 1, 0, _pos, random 360, _si, -1, _group, 0, 0] exec "Common\AddUnit.sqs"
+  ~1
+  goto "InitAddTank"
+#TanksAdded
+
+_town = objNull
+
+#Update
+  ~60
+	? (count (units _group)) == 0 : goto "Update"
+
+  _group setCombatMode "RED"; _group setBehaviour "COMBAT"; _group setSpeedMode "FULL"
+  
+  ; TODO { _x disableAI "TARGET" } foreach (units _group)
+
+	? time < _timePatrol : goto "Patrol"
+	_res = [-1,0]
+	{ if (_x == driver vehicle _x) then { _res = [getPos _x, siRes, []] call funcGetClosestEnemyTown; if ((_res select 0) != -1) then { _flag = (towns select (_res select 0)) select tdFlag; _x doMove ([getPos _flag, 4, 4] call funcGetRandomPos) } } } forEach (units _group)
+	? (_res select 0) == -1 && time > _timeDestroy : goto "Destroy"
+	? (_res select 0) != -1 : goto "Update"
+	
+#Patrol
+  #GenPatrolPos
+  	_posPatrol = [posCenter, 0, 4000] call funcGetRandomPos
+    ? !([_posPatrol] call funcStartPos) : goto "GenPatrolPos"
+	
+  { if (_x == driver vehicle _x) then { _x doMove ([_posPatrol, 10, 20] call funcGetRandomPos) } } foreach (units _group)
+	; player globalchat Format ["UpdatePatrollingResTank.sqs: Patrol: _posPatrol=%1", _posPatrol]
+	goto "Update"
+
+#Destroy
+	{ _res1 = [getPos _x, si0] call funcGetClosestEnemyObject; _res0 = [getPos _x, si1] call funcGetClosestEnemyObject;	_object = [_res1 select 0, _res0 select 0] select ((_res0 select 1) < (_res1 select 1)); if (_x == driver vehicle _x) then { _x doMove ([getPos _object, 50, 100] call funcGetRandomPos) }; if ( _x != vehicle _x && _x == gunner vehicle _x && (_x distance _object) < 200) then { [_x, _object] exec "Server\DestroyObject.sqs" } } forEach (units _group)
+	goto "Update"

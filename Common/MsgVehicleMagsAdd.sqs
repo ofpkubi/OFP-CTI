@@ -1,0 +1,17 @@
+#Start
+
+@!(isNull pvAddMags)
+
+_v = pvAddMags
+pvAddMags = objNull
+
+? !(local _v) || !(alive _v) : goto "Start"
+? (count (magazines _v)) > 0 : format["WARNING: vehicle have mags in MsgVehicleMagsAdd.sqs"] call fDebugLog; goto "Start"
+
+_rearmData = _v call funcGetRearmData
+_weapons = _rearmData select 0
+_mags = _rearmData select 1
+? (count _mags) == 0 : goto "Start"
+? (local _v) : { _v addMagazine _x } foreach _mags
+
+goto "Start"

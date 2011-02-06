@@ -1,0 +1,49 @@
+; args : none
+
+
+_textSP = ["Random", "Fix", localize "STR_0_START_0", localize "STR_0_START_1"] select fixedStartPos
+? timeLimit == 0 : _textTimeLimit = "None"
+? timeLimit > 0 : _textTimeLimit = format["%1 hours", timeLimit/(60*60)]
+_textPricingMode = ["Normal", "Doubled"] select PricingMode
+;? single == 1 : _textbases = "Single"
+;? single == 0 : _textbases = "Multi"
+
+? (param1 == 1):_textIncome = "Normal"
+? (param1 == 2):_textIncome = "Doubled"
+? (param1 == 3):_textIncome = "Normal"
+? (param1 == 4):_textIncome = "Normal"
+;? (param1 == 5):_textIncome = "Normal"
+;? (param1 == 6):_textIncome = "Doubled"
+
+
+? (PricingMode == 0) && (param1 == 1):_textgamemode = "Experienced"
+? (PricingMode == 0) && (param1 == 2):_textgamemode = "Beginer Noobs"
+? (PricingMode == 0) && (param1 == 3):_textgamemode = "Experienced Noobs"
+? (PricingMode == 0) && (param1 == 4):_textgamemode = "Experienced Noobs"
+;? (PricingMode == 0) && (param1 == 5):_textgamemode = "Good Gamers"
+;? (PricingMode == 0) && (param1 == 6):_textgamemode = "Good Gamers"
+
+? (PricingMode == 1) && (param1 == 1):_textgamemode = "EXPERT GAMERS"
+? (PricingMode == 1) && (param1 == 2):_textgamemode = "TOTAL NOOBS"
+? (PricingMode == 1) && (param1 == 3):_textgamemode = "Experienced"
+? (PricingMode == 1) && (param1 == 4):_textgamemode = "Experienced"
+;? (PricingMode == 1) && (param1 == 5):_textgamemode = "HardCore Pros"
+;? (PricingMode == 1) && (param1 == 6):_textgamemode = "WTF ??"
+
+
+
+~2
+
+_siEnemy = siEnemy select siPlayer
+_group = (groupMatrix select _siEnemy) select 0
+_textEnemyCo = [name leader _group,"AI"] select (_group in (groupAiMatrix select _siEnemy))
+
+_group = (groupMatrix select siPlayer) select 0
+_textCo = [name leader _group,"AI"] select (_group in (groupAiMatrix select siPlayer))
+
+_info = format["GOOD LUCK ALL\n\nGame Style:\n%9\nStart positions: %1\nGroup size: %2\nView distance: %3\nPricing: %5\nIncome: %6\n\nOur Commander is:\n%7\n\nEnemy Commander is:\n%8\n\nMission:\n%4", _textSP, maxGroupSize, viewDistance, localize "STR_MISSION_NAME", _textPricingMode, _textIncome, _textCo, _textEnemyCo, _textgamemode]
+
+;_info = format["GOOD LUCK ALL \nStart positions  %1\nGroup size  %2\nView distance  %3\n%4", _textSP, maxGroupSize, viewDistance, localize "STR_MISSION_NAME"]
+
+;titleText [_info, "PLAIN DOWN", 2]
+hint _info

@@ -1,0 +1,28 @@
+#Start
+
+@(pvArt != -1)
+
+_value = pvArt
+_valuePos = pvArtPos
+
+pvArt = -1
+pvArtPos = -1
+
+? (_valuePos == -1): goto "Start"
+
+_detections = _value % 100000
+_si = (_value - _detections)/100000
+
+? (_si != siPlayer): goto "Start"
+
+_radars = [siPlayer, stComm] call funcGetWorkingStructures
+
+? (count _radars == 0): goto "Start"
+
+_pos = [10*(_valuePos % 3000), 10*((_valuePos - (_valuePos % 3000))/3000)]
+
+player sidechat format["Artillery detected (%1 detections). Estimated pos: %2", _detections, _pos call funcCalcMapPos]
+
+_pos exec "Player\SetArtilleryMarker.sqs"
+
+goto "Start"

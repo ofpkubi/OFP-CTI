@@ -1,0 +1,15 @@
+; args: [unit, seconds]
+
+_unit = _this select 0
+_delay = _this select 1
+
+~_delay
+
+? (isNull _unit): Exit
+
+_leader = false
+{ if (_unit == leader _x) then { _leader = true } } foreach (groupMatrix select si0)
+{ if (_unit == leader _x) then { _leader = true } } foreach (groupMatrix select si1)
+? _leader : Exit
+
+? !(isNull _unit): deleteVehicle _unit

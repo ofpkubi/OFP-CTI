@@ -1,0 +1,67 @@
+; arg: [unit, si, giBuyer]
+
+_unit = _this select 0
+_si = _this select 1
+_giBuyer = _this select 2
+
+_giJoin = _giBuyer
+
+#CheckBuyUnit
+	_money = (groupMoneyMatrix select _si) select _giBuyer
+	? _money < 500 : exit
+	
+	_slots = maxGroupSize - (count units ((groupMatrix select _si) select _giJoin) + ((groupUnitsBuildingMatrix select _si) select _giJoin))
+  ? _slots <= 0 : exit
+  
+	_unitsBuy = (unitsBuyAI select _si) select (((aiSetting select _si) select _giJoin) select aisBuy)
+
+  _type = _unitsBuy call funcGetRandomUnitType
+	? _type == -1 : exit
+
+	_unitDesc = unitDefs select _type
+	_cost = _unitDesc select udCost
+	_crew = _unitDesc select udCrew
+	_driver = 0
+	_gunner = 0
+	? (count _crew) == 2 : _costCrew = (unitDefs select (_crew select 1)) select udCost; _driver = 1; _gunner = [0, 1] select ((_crew select 0) > 1); _cost = _cost + _driver*_costCrew + _gunner*_costCrew
+
+	? _slots < (_driver + _gunner) : exit
+	? _money < _cost : exit
+	
+	_factoryType = _unitDesc select udFactoryType
+	_factory = [_si, _factoryType, true] call funcGetIdleFactory
+	; TODO ? (isNull _factory) : _factory = [_si, _factoryType] call funcGetFactoryWithEmptyQueue
+	? (isNull _factory) : exit
+	[_type, _driver, _gunner, 0, _si, _giJoin, _giBuyer, _factory] exec "Server\BuyUnit.sqs"
+
+	exit
+
+#BuyInfantry
+  _type = (infAI select _si) call funcGetRandomUnitType
+	? _type == -1 : exit
+	_factoryType = (unitDefs select _type) select udFactoryType
+	_factory = [_si, _factoryType, true] call funcGetIdleFactory
+	; TODO ? isNull _factory : _factory = [_si, _factoryType] call funcGetFactoryWithEmptyQueue
+	? isNull _factory : goto _return
+	[_type, 0, 0, 0, _si, _giJoin, _giBuyer, _factory] exec "Server\BuyUnit.sqs"
+	exit
+
+#BuyTank
+  _type = (armorAI select _si) call funcGetRandomUnitType
+	? _type == -1 : exit
+	_factoryType = (unitDefs select _type) select udFactoryType
+	_factory = [_si, _factoryType, true] call funcGetIdleFactory
+	; TODO ? (isNull _factory): _factory = [_si, _factoryType] call funcGetFactoryWithEmptyQueue
+	? (isNull _factory): goto _return
+	[_type, 1, 1, 0, _si, _giJoin, _giBuyer, _factory] exec "Server\BuyUnit.sqs"
+	exit
+
+#BuyAir
+  _type = (airAI select _si) call funcGetRandomUnitType
+	? _type == -1 : exit
+  _gunner = [0, 1] select ( (((unitDefs select _type) select udCrew) select 0) > 1)
+	_factoryType = (unitDefs select _type) select udFactoryType
+	_factory = [_si, _factoryType, true] call funcGetIdleFactory
+	; TODO ? (isNull _factory): _factory = [_si, _factoryType] call funcGetFactoryWithEmptyQueue
+	? !(isNull _factory): [_type, 1, _gunner, 0, _si, _giJoin, _giBuyer, _factory] exec "Server\BuyUnit.sqs"
+	exit

@@ -1,0 +1,19 @@
+; args: [si, giFrom, giTo, amount]
+
+_si = _this select 0
+_giFrom = _this select 1
+_giTo = _this select 2
+_amount = _this select 3
+
+; player globalchat format["SendMoneyGive: _si=%1, _giFrom=%2, _giTo=%3, _amount=%4", _si, _giFrom, _giTo, _amount]
+
+? _amount <= 0 : exit
+_money = (groupMoneyMatrix select _si) select _giFrom
+? _money < _amount : exit
+
+_value = _amount/10
+_value = _value + (10000)*_giFrom
+_value = _value + (10000*18)*_giTo
+_value = _value + (10000*18*18)*_si
+
+pvMoneyGive = _value; PublicVariable "pvMoneyGive"

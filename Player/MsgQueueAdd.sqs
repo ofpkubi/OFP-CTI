@@ -1,0 +1,29 @@
+; args: value
+
+_value = _this
+
+_type = _value % 200
+_value = _value - _type
+
+_id = (_value % (200*100))/200
+_value = _value - _id*200
+
+_giBuyer = (_value % (200*100*18))/(200*100)
+_value = _value - _giBuyer*(200*100)
+
+_giJoin = (_value % (200*100*18*18))/(200*100*18)
+_value = _value - _giJoin*(200*100*18)
+
+_si = _value/(200*100*18*18)
+
+; player globalchat format ["MsgQueueAdd.sqs: _id=%1 _type=%2 _si=%3 _giB=%4 _giJ=%5", _id, _type, _si, _giBuyer, _giJoin ]
+
+? _si != siPlayer || (_giBuyer != giPlayer && _giJoin != giPlayer) : exit
+
+_found = false
+{ if (_id == (_x select 0)) then { _found = true } } foreach qPlayer
+
+? _type >= maxUnitTypes : _unitName = format["cs%1", _type - maxUnitTypes]
+? _type < maxUnitTypes : _unitName = (unitDefs select _type) select udName
+
+? !_found : qPlayer set [count qPlayer, [_id, _type]]; player groupchat format["Queued %1", _unitName]

@@ -1,0 +1,23 @@
+; args: [vehicle, type, si]
+
+_v = _this select 0
+
+~1
+? !(local _v) || !(alive _v) : exit
+
+_v addMagazine "MachineGun30A10Burst"
+_v addMagazine "MachineGun30A10Burst"
+_v addWeapon "MachineGun30A10Burst"
+_v addMagazine "Rocket57x192"
+_v addWeapon "Rocket57x192"
+_v addMagazine "LaserGuidedBombLauncher"
+_v addWeapon "LaserGuidedBombLauncher"
+
+? ((upgMatrix select si1) select upgmissilesATres) == 2 : _v addMagazine "Ch29TLauncher",_v addMagazine "Ch29TLauncher", _v addWeapon "Ch29TLauncher"
+? ((upgMatrix select si0) select upgmissilesATres) == 2 : _v addMagazine "MaverickLauncher",_v addMagazine "MaverickLauncher",_v addWeapon "MaverickLauncher"
+
+
+
+Exit
+
+

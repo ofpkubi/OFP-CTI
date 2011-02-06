@@ -1,0 +1,39 @@
+#Start
+
+@(pvOrder != -1)
+
+_msg = pvOrder
+pvOrder = -1
+
+_value = _msg
+
+_type = _value % 20
+_value = _value - _type
+
+_param0 = (_value % (20*20))/(20)
+_value = _value - _param0*(20)
+
+_param1 = (_value % (20*20*10))/(20*20)
+_value = _value - _param1*(20*20)
+
+_param2 = (_value % (20*20*10*10))/(20*20*10)
+_value = _value - _param2*(20*20*10)
+
+_gi = (_value % (20*20*10*10*18))/(20*20*10*10)
+_value = _value - _gi*(20*20*10*10)
+
+_si = _value/(20*20*10*10*18)
+
+_id = ((orderMatrix select _si) select _gi) select 0
+(orderMatrix select _si) set [_gi, [_id+1, _type, [_param0, _param1, _param2]]]
+
+? isNull player : goto "Start"
+? _si != siPlayer : goto "Start"
+
+_group = (groupMatrix select _si) select _gi
+
+(leader _group) sidechat format["Order Acknowledged, %1", ((orderMatrix select _si) select _gi) call funcGetOrderDesc]
+
+; [_si, _gi, _type] exec "Server\Info\OrderAck.sqs"
+
+goto "Start"

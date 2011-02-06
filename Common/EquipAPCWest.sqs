@@ -1,0 +1,22 @@
+; args: [vehicle, type, si]
+
+_v = _this select 0
+
+~1
+? !(local _v) || !(alive _v) : exit
+
+
+_v RemoveMagazine "Browning"
+_v RemoveWeapon "Browning"
+_v addMagazine "M1_50cal"
+_v addMagazine "M1_50cal"
+_v addMagazine "M1_50cal"
+_v addMagazine "M1_50cal"
+_v addMagazine "M1_50cal"
+_v addMagazine "M1_50cal"
+_v addMagazine "M1_50cal"
+_v addMagazine "M1_50cal"
+_v addMagazine "M1_50cal"
+_v addMagazine "M1_50cal"
+_v addweapon "M1_50cal"
+

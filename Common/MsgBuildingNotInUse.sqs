@@ -1,0 +1,10 @@
+#Start
+
+@!(isNull pvBuildingNotInUse)
+
+_building = pvBuildingNotInUse
+pvBuildingNotInUse = objNull
+
+buildingsInUse = buildingsInUse - [_building, objNull]
+
+goto "Start"

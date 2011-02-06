@@ -1,0 +1,19 @@
+; args: [si, giFrom, giTo, amount]
+
+_si = _this select 0
+_giFrom = _this select 1
+_giTo = _this select 2
+_amount = (_this select 3)/10
+
+@!(mutexMoneyTransfer)
+mutexMoneyTransfer = true
+
+_value = _amount
+_value = _value + (10000)*_giFrom
+_value = _value + (10000*18)*_giTo
+_value = _value + (10000*18*18)*_si
+
+pvMoneyTransfer = _value; PublicVariable "pvMoneyTransfer"
+
+~sendDelay
+mutexMoneyTransfer = false

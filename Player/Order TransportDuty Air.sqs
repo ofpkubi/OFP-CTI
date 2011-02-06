@@ -1,0 +1,122 @@
+; args: [unit, pos, [distEject]]
+
+_unit = _this select 0
+_pos = _this select 1
+_distEject = 200*( 1 + ((_this select 2) select 0) )
+
+_transp = vehicle _unit
+
+? !(alive _unit) || _unit == _transp || _unit != driver _transp : exit
+
+_wps = []
+
+_i = 0
+while "((wpPlayer select _i) select 0) != -1" do { _wps set [_i, +(wpPlayer select _i)]; _i=_i+1 }
+
+? (count _wps) < 2 : exit
+
+_order = []; _id = -1; call orderNew
+
+_i = -1
+_dir = +1
+_msg = ""
+_msgAbort = "Transport duty aborted."
+_crew = -1
+
+? (count crew _transp) > 2 : _i = (count _wps) - 2; goto "MoveNextPos"
+? ([getPos _transp, _wps select 0] call funcDistH) < 200 && ((getPos _transp) select 2) < 2 : _i = 0; _pos = _wps select 0; goto "WaitForCargo"
+
+#MoveNextPos
+? _i == 0 : _dir = +1
+? _i == ((count _wps) - 1) : _dir = -1
+_i = _i + _dir
+_pos = [_wps select _i, 50, 50] call funcGetRandomPos
+_transp flyInHeight (150 + random 100)
+_unit doMove _pos
+_timeAbort = time + 5*60
+? (damage _transp) > 0.2 : _unit groupchat "Transport need repairs"
+#CheckPosReached
+  ~5
+  ? call orderCheck : goto "Exit"
+  ? !(alive _unit) : goto "Exit"
+  ? time > _timeAbort || !(alive _transp) || _transp != (vehicle _unit) : _msg = _msgAbort; goto "Exit"
+  ? _i == ((count _wps) - 1) && ([_pos, getPos _transp] call funcDistH) < _distEject : goto "EjectCargo"
+  ? ([_pos, getPos _transp] call funcDistH) > 200 : goto "CheckPosReached"
+
+? _i == 0 : goto "PrepareLand"
+? _i == 0 : goto "WaitForCargo"
+goto "MoveNextPos"
+
+#PrepareLand
+_transp flyInHeight (150 + random 100)
+#PrepareLand_Check
+  [_unit, _pos] call funcMove
+  ~5
+  ? !(alive _unit) : goto "Exit"
+  ? call orderCheck : goto "Exit"
+  ? !(alive _transp) || _transp != (vehicle _unit) : _msg = _msgAbort; goto "Exit"
+  ? ([_pos, getPos _transp] call funcDistH) > 200 || (speed _transp) > 20 : goto "PrepareLand_Check"
+
+#Land
+_transp flyInHeight 50
+[_unit, _pos] call funcMove
+_timeRetry = time + 60
+#Land_Check
+  ~5
+  ? !(alive _unit) : goto "Exit"
+  ? call orderCheck : goto "Exit"
+  ? !(alive _transp) || _transp != (vehicle _unit) : _msg = _msgAbort; goto "Exit"
+  ? time > _timeRetry : goto "PrepareLand"
+  ? !(unitReady _unit) : goto "Land_Check"
+
+_unit groupchat "Landing."
+doStop _unit
+_transp land "LAND"
+_timeRetry = time + 60
+#CheckLand
+  ~5
+  ? !(alive _unit) : goto "Exit"
+  ? call orderCheck : goto "Exit"
+  ? !(alive _transp) || _transp != (vehicle _unit) : _msg = _msgAbort; goto "Exit"
+  ? time > _timeRetry : goto "PrepareLand"
+  ? ((getPos _transp) select 2) > 2 : goto "CheckLand"
+
+#WaitForCargo
+  [_transp, false] exec "Common\LockVehicle.sqs"
+  _unit groupchat "Waiting for cargo."
+  _crew = -1
+  #WaitForCargo_Check
+  ~30
+  ? !(alive _unit) : goto "Exit"
+  ? call orderCheck : goto "Exit"
+  ? !(alive _transp) || _transp != (vehicle _unit) : _msg = _msgAbort; goto "Exit"
+  ? ((getPos _transp) select 2) > 2 : goto "PrepareLand"
+  ? ([_pos, getPos _transp] call funcDistH) > 200 : _msg = _msgAbort; goto "Exit"
+  ? (count (crew _transp)) < 4 : goto "WaitForCargo_Check"
+  ? (count (crew _transp)) > 10 : goto "MoveOut"
+  ? (count (crew _transp)) > _crew : _crew = count (crew _transp); goto "WaitForCargo_Check"
+
+#MoveOut
+[_transp, true] exec "Common\LockVehicle.sqs"
+_unit groupchat "Taking off."
+_transp flyInHeight 40
+_unit doMove (_wps select 1)
+~30
+? !(alive _unit) : goto "Exit"
+? !(alive _transp) || _transp != (vehicle _unit) : _msg = _msgAbort; goto "Exit"
+? call orderCheck : goto "Exit"
+goto "MoveNextPos"
+
+#EjectCargo
+_unit groupchat "Ejecting cargo."
+[_transp, siPlayer] exec "Common\EjectCargo.sqs"
+~10
+? call orderCheck : goto "Exit"
+? !(alive _unit) : goto "Exit"
+? !(alive _transp) || _transp != (vehicle _unit) : _msg = _msgAbort; goto "Exit"
+goto "MoveNextPos"
+
+#Exit
+  ? (alive _unit) && _msg != "" : _unit groupchat _msg
+  ? (alive _transp) && _unit != (driver _transp) : [_transp, false] exec "Common\LockVehicle.sqs"
+  

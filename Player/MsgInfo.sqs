@@ -1,0 +1,9 @@
+_value = _this
+
+_msgType = _value % 100
+_value = (_value - _msgType)/100
+
+_scriptShort = (infoDefs select _msgType) select 0
+_script = format ["Player\Info\%1", _scriptShort]
+
+[_value] exec _script

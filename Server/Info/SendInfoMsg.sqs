@@ -1,0 +1,15 @@
+; args: value
+
+_value = _this
+
+@!(mutexInfo)
+mutexInfo = true
+
+[] call format["pvInfo%1 = _value", indexInfoMsg]
+[] call format["PublicVariable ""pvInfo%1""", indexInfoMsg]
+indexInfoMsg = indexInfoMsg + 1
+? (indexInfoMsg >= countInfoMsg): indexInfoMsg = 0
+
+~(sendDelay/countInfoMsg)
+
+mutexInfo = false

@@ -1,0 +1,10 @@
+#Start
+
+@(pvInfo0 != -1)
+
+_value = pvInfo0
+pvInfo0 = -1
+
+_value exec "Player\MsgInfo.sqs"
+
+goto "Start"

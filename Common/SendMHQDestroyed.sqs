@@ -1,0 +1,14 @@
+; args: [siMHQ, siKiller, giKiller]
+
+_siMHQ = _this select 0
+_siKiller = _this select 1
+_giKiller = _this select 2
+
+_value = mtMHQDestroyed
+if (_siKiller == _siMHQ) then { _value = _value + 100*_giKiller } else { _value = _value + 100*0 }
+if (_siKiller == _siMHQ) then { _value = _value + (100*18)*_siKiller } else { _value = _value + (100*18)*siRes }
+_value = _value + (100*18*10)*_siMHQ
+
+? (local LocalServerObject) : _value exec "Server\Info\SendInfoMsg.sqs"; exit
+
+pvInfo0 = _value; PublicVariable "pvInfo0"

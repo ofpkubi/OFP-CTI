@@ -1,0 +1,36 @@
+
+_Missile =  _this select 0
+
+_Type= typeOf _Missile
+
+_Upos= GetPos _Missile;
+#loop
+? _Type != typeOf _Missile : goto "end"
+?(not alive _Missile) : goto "end"
+_Upos= GetPos _Missile;
+~0.01
+goto "loop"
+
+#End
+_ux=_Upos Select 0;
+_uy=_Upos Select 1;
+_uz=_Upos Select 2;
+
+_count = 0
+_k = 200
+_k2 = _k/2
+	_text = format["Impact"]
+	Player Sidechat _text
+#start
+_count = _count + 1
+_Rndx = Random _k
+_Rndx2 = _Rndx -_k2
+_Rndy = Random _k
+_Rndy2 = _Rndy -_k2
+_LaserGuidedBomb="Shell125" CamCreate [_ux+_Rndx2,_uy+_Rndy2,0];
+;_LaserGuidedBomb="LaserGuidedBomb" CamCreate [_ux+_Rndx2,_uy+_Rndy2,0];
+;Player Globalchat format["%1 %2",_Rndx2,_Rndy2]
+~.01
+?(_count > 25):exit
+goto "start"
+exit

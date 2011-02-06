@@ -1,0 +1,11 @@
+; args: [vehicle, unit, idAction]
+
+_vehicle = _this select 0
+_unit = _this select 1
+
+? (_unit != player): Exit
+
+_found = [getPos _vehicle, siBoth, (typesSupport select si0) + (typesSupport select si1), [_vehicle]] call funcGetClosestVehicle
+
+? (_found select 1) > rangeSupport: hint "No support vehicle in range"; Exit
+[_unit, _found select 0] exec "Player\HealRepair.sqs"

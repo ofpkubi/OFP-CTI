@@ -1,0 +1,5 @@
+; args [vehicle]
+
+_vehicle = _this select 0
+
+pvRemoveMags = _vehicle; publicVariable "pvRemoveMags"

@@ -1,0 +1,49 @@
+;Last modified 09/19/08
+;Workaround the the bridge bug.  Use to to warp a unit to the other side.  Also handy for river crossing points.
+;Script usage:  [Unit,Town] exec "SetTownSide.sqs"
+
+_units = _this Select 0
+_bridgeDestination = _this Select 1
+
+_count = 0
+_totalUnits = Count _units
+
+_humanunits = call fGetHumanUnits;
+
+#MoveUnit
+
+;? damage (object 12334) > 0.99: exit
+;? damage (object 12335) > 0.99: exit
+;? damage (object 12336) > 0.99: exit
+;? damage (object 12337) > 0.99: exit
+;? damage (object 12338) > 0.99: exit
+;? damage (object 12339) > 0.99: exit
+;? damage (object 12340) > 0.99: exit
+;? damage (object 12341) > 0.99: exit
+;? damage (object 12342) > 0.99: exit
+
+	_unit = _units Select _count;
+	_position = GetPos _unit;
+	_count = _count + 1;
+
+	;Don't transport aircraft.
+	? (_position select 2 > 3): goto "SkipUnit";
+	
+	;Don't transport human players
+	;and vehicles they might be mounted in
+	_si = siRes;
+	? (side _unit == west): _si = si0;
+	? (side _unit == east): _si = si1;		
+	? (_si == siRes): goto "IsNotHuman";
+	
+	? (_unit in (_humanunits select _si)): goto "SkipUnit";
+	? ((driver _unit) in (_humanunits select _si)): goto "SkipUnit";
+	? ((gunner _unit) in (_humanunits select _si)): goto "SkipUnit";
+	? ((commander _unit) in (_humanunits select _si)): goto "SkipUnit";
+			
+#IsNotHuman
+	_unit SetPos GetMarkerPos _bridgeDestination;
+
+#SkipUnit
+	? (_count < _totalUnits):goto "MoveUnit";
+	exit;

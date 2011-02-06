@@ -1,0 +1,30 @@
+#Start
+
+@(pvSetting != -1)
+
+_value = pvSetting
+pvSetting = -1
+
+_type = _value % 20
+_value = _value - _type
+
+_setting = (_value % (20*20))/(20)
+_value = _value - _setting*(20)
+
+_gi = (_value % (20*20*18))/(20*20)
+_value = _value - _gi*(20*20)
+
+_si = _value/(20*20*18)
+
+((aiSetting select _si) select _gi) set [_type, _setting]
+
+? isNull player : goto "Start"
+? _si != siPlayer : goto "Start"
+
+_group = (groupMatrix select _si) select _gi
+_nameType = (aiSettingDefs select _type) select 0
+_nameSetting = ((aiSettingDefs select _type) select 1) select _setting
+
+(leader _group) sidechat format["Behaviour Acknowledged, %1 at %2", _nameType, _nameSetting]
+
+goto "Start"

@@ -1,0 +1,35 @@
+; args: [vehicle, shell]
+
+_vehicle = _this select 0
+_shell = _this select 1
+
+? !(local _shell) : exit
+
+~1
+
+? (siPlayer > 1) : exit
+? ((upgMatrix select siPlayer) select upgLongWeaponRange) == 2 : goto "check2"
+
+#Check
+	? ((isNull _shell) || (_ammo == ammoMine)): exit
+	? (_shell distance _vehicle) > viewDistance : goto "DeleteShell"
+	~0.1
+	goto "Check"
+
+#DeleteShell
+  ; player globalchat format["Shell deleted, lifetime = %1, distance = %2", _time, _shell distance _vehicle]
+
+  ? !(isNull _shell) : deleteVehicle _shell
+  exit
+
+#Check2
+	? ((isNull _shell) || (_ammo == ammoMine)): exit
+	? (_shell distance _vehicle) > 2500 : goto "DeleteShell"
+	~0.1
+	goto "Check2"
+
+#DeleteShell
+  ; player globalchat format["Shell deleted, lifetime = %1, distance = %2", _time, _shell distance _vehicle]
+
+  ? !(isNull _shell) : deleteVehicle _shell
+  exit

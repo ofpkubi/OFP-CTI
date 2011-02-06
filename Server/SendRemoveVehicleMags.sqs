@@ -1,0 +1,11 @@
+; args [vehicle]
+
+_vehicle = _this select 0
+
+@!(mutexSend)
+mutexSend = true
+
+pvRemoveMags = _vehicle; PublicVariable "pvRemoveMags"
+
+~sendDelay
+mutexSend = false

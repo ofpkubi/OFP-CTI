@@ -1,0 +1,10 @@
+#Start
+
+@(pvMoney6 != -1)
+
+_value = pvMoney6
+pvMoney6 = -1
+
+_value exec "Player\MsgMoneyStatus.sqs"
+
+goto "Start"

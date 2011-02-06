@@ -1,0 +1,103 @@
+; args: [unit, si, gi, forceRearm]
+
+_unit = _this select 0
+_si = _this select 1
+_gi = _this select 2
+
+_heal = false
+_rearm = false
+
+? (count _this) > 3 : _rearm = true
+
+? _unit != driver vehicle _unit : exit
+
+_v = vehicle _unit 
+_vt = -1
+? _unit != _v : goto "CheckVehicle"
+
+#CheckInfantry
+  ? (damage _unit) > 0.2 : _heal = true
+  ? _rearm : goto "CheckSupportVehicle"
+  _wpnPrim = primaryWeapon _unit
+  _wpnSec = secondaryWeapon _unit
+  ? _wpnPrim != "" : if ((_unit ammo _wpnPrim) == 0) then { _rearm = true }
+  ? _wpnSec != "" : if ((_unit ammo _wpnSec) == 0) then { _rearm = true }
+  ? _heal || _rearm : goto "CheckSupportVehicle"
+  exit
+
+#CheckVehicle
+  ? (damage _v) > 0.2 : _heal = true
+  { if ((damage _x) > 0.2) then { _heal = true } } foreach (crew _v)
+  ? _rearm : goto "CheckSupportVehicle"
+  _rearmData = _v call funcGetRearmData
+  _rearmMags = _rearmData select 1
+  ? (count _rearmMags) == 0 : _rearm = false; goto "SkipRearm"
+  _weapons = weapons _v
+  { if ((_v ammo _x) == 0) then { _rearm = true }  } foreach _weapons
+  ; player globalchat format["rearm: _v ammo %1 = %2", _weapons select 0, _v ammo (_weapons select 0)]
+  #SkipRearm
+  ? _heal || _rearm : goto "CheckSupportVehicle"
+  exit
+  
+#CheckSupportVehicle
+_res = [getPos _v, _si, typesSupport select _si, [_v]] call funcGetClosestVehicle
+_support = _res select 0
+? (_res select 1) < 1500 : goto "SupportFound"
+
+_res = [getPos _v, siEnemy select _si, typesSupport select (siEnemy select _si), [_v]] call funcGetClosestVehicle
+_support = _res select 0
+? (_res select 1) < 200 : goto "SupportFound"
+exit
+
+#SupportFound
+[_unit, _support] exec "Server\SendMovingToSupport.sqs"
+; player globalchat format["%1 found support %2", _unit, _support]
+call busySet
+
+_timeAbort = time + 2*60
+
+? _unit != _v : _vt = _v call funcGetUnitTypeFromObject
+? _unit != _v && _vt == -1 : goto "Exit"
+
+? _vt != -1 : if ( ((unitDefs select _vt) select udFactoryType) == stAir ) then { goto "MoveAir" }
+
+#MoveGround
+  [_unit, [getPos _support, 10, 10] call funcGetRandomPos] call funcMoveAI
+  ~10
+  ? !(alive _unit) || _v != (vehicle _unit) || !(alive _support) || time > _timeAbort : goto "Exit"
+	; ? _idOrder != ((orderMatrix select _si) select _gi) select 0 : goto "Exit"
+  ? (_v distance _support) > rangeSupport : goto "MoveGround"
+goto "SupportReached"
+
+#MoveAir
+  _v flyInHeight 200
+#MoveAir_Check
+  [_unit, getPos _support] call funcMoveAI
+  ~5
+  ? !(alive _unit) || _v != (vehicle _unit) || !(alive _support) || time > _timeAbort : goto "Exit"
+  ? ([getPos _v, getPos _support] call funcDistH) > 2*rangeSupport || (speed _v) > 20 : goto "MoveAir_Check"
+
+#Hover
+_v flyInHeight 10
+_posMove = getPos _support
+[_unit, _posMove] call funcMove
+_timeRetry = time + 60
+#Hover_Check
+  ~5
+  ? !(alive _unit) || _v != (vehicle _unit) || !(alive _support) : goto "Exit"
+  ? time > _timeRetry : goto "MoveAir"
+  ? (_unit distance _support) > 2*rangeSupport : goto "Hover_Check"
+goto "SupportReached"
+
+#SupportReached
+doStop _unit
+_v flyInHeight 200
+? _heal : [_unit, _si, _gi, _v, _vt, _support] exec "Server\AI_Heal.sqs"
+? _rearm : [_unit, _si, _gi, _v, _vt, _support] exec "Server\AI_Rearm.sqs"
+~5
+? _unit == vehicle _unit : goto "Exit"
+~30
+
+#Exit
+  call busyClear
+  exit

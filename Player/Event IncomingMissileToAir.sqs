@@ -1,0 +1,10 @@
+; args: [target, ammo, whoFired]
+
+_target = _this select 0
+_ammo = _this select 1
+_source = _this select 2
+
+?( !alive _target ):exit
+?( !isengineon _target ):exit
+
+_target vehicleradio "dll_IncomingWarning"

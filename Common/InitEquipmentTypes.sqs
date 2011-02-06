@@ -1,0 +1,370 @@
+
+equipDefs = []
+
+edName = 0
+edSides = 1
+edSlotType = 2
+edSlots = 3
+edObject = 4
+edImage = 5
+edcost = 6
+
+; inventory slot types
+isGeneral = 0
+isHandgun = 1
+isOptics = 2
+
+isGeneralSlots = 10
+isHandgunSlots = 4
+isOpticsSlots = 2
+
+; addon specific equipment used in scripts
+magMine = "Mine"
+magHandGrenade = "HandGrenade"
+ammoMine = "Mine"
+magTimeBomb = "TimeBomb"
+magSatchel = "PipeBomb"
+weaponPut = "Put"
+weaponsCustom = []
+
+cargoCarSide0 = [[magMine,2], ["Pipebomb",2], ["LAWLauncher",3], ["CarlGustavLauncher",2], ["AALauncher",1], ["M21",4], ["HuntingRifleMag",6], ["GrenadeLauncher",8], ["MM1magazine",4]]
+cargoCarSide1 = [[magMine,2], ["Pipebomb",2], ["RPGLauncher",3], ["AT4Launcher",2], ["9K32Launcher",1], ["SVDDragunov",8], ["HuntingRifleMag",6], ["GrenadeLauncher",8], ["6g30Magazine",8]]
+
+cargoCar2Side0 = [[magMine,4], ["Pipebomb",4], ["LAWLauncher",6], ["CarlGustavLauncher",4], ["AALauncher",3], ["M21",4], ["HuntingRifleMag",6], ["GrenadeLauncher",8], ["MM1magazine",4]]
+cargoCar2Side1 = [[magMine,4], ["Pipebomb",4], ["RPGLauncher",6], ["AT4Launcher",4], ["9K32Launcher",3], ["SVDDragunov",8], ["HuntingRifleMag",6], ["GrenadeLauncher",8], ["6g30Magazine",8]]
+
+
+cargoTruckSide0 = [[magMine,4], ["Pipebomb",4], ["LAWLauncher",6], ["CarlGustavLauncher",4], ["AALauncher",4], ["M21",4], ["HuntingRifleMag",6], ["GrenadeLauncher",8], ["MM1magazine",4]]
+cargoTruckSide1 = [[magMine,4], ["Pipebomb",4], ["RPGLauncher",6], ["AT4Launcher",4], ["9K32Launcher",4], ["SVDDragunov",8], ["HuntingRifleMag",6], ["GrenadeLauncher",8], ["6g30Magazine",8]]
+
+weaponsRespawnPlayer = [ ["XMS", "LAWLauncher", "Binocular"], ["kegak107", "RPGLauncher", "Binocular"] ]
+magsRespawnPlayer = [ ["M4", "M4", "M4", "M4", "LAWLauncher", "LAWLauncher"], ["kegak107mag", "kegak107mag", "kegak107mag", "kegak107mag", "RPGLauncher", "RPGLauncher"] ]
+
+weaponsRespawnAI = [ ["XMS", "LAWLauncher"], ["kegak107", "RPGLauncher"] ]
+magsRespawnAI = [ ["M4", "M4", "M4", "M4", "LAWLauncher", "LAWLauncher", "HandGrenade", "HandGrenade"], ["kegak107mag", "kegak107mag", "kegak107mag", "kegak107mag", "RPGLauncher", "RPGLauncher", "HandGrenade", "HandGrenade"] ]
+
+; EQUIP (ammo followed by equipment)
+
+; IMPORTANT - primary and secondary mag names must be same as weapon name to make template names look good
+
+_type = 0
+
+; WEST AMMO
+
+equipDefs set [_type, ["M16", si0, isGeneral, 1, "M16", "\dtaExt\equip\m\m_m16",5]]
+_atM16 = _type
+_type = _type + 1
+
+equipDefs set [_type, ["M21", si0, isGeneral, 1, "M21", "\dtaExt\equip\m\m_m21",20 ]]
+_atM21 = _type
+_type = _type + 1
+
+equipDefs set [_type, ["HK", si0, isGeneral, 1, "HK", "\dtaExt\equip\m\m_hk",5 ]]
+_atHK = _type
+_type = _type + 1
+
+equipDefs set [_type, ["XMS", si0, isGeneral, 1, "M4", "\dtaExt\equip\m\m_m4",10 ]]
+_atM4 = _type
+_type = _type + 1
+
+equipDefs set [_type, ["MM1", si0, isGeneral, 8, "MM1magazine", "\mm-1\m_mm1",10 ]]
+_atMM1 = _type
+_type = _type + 1
+
+;equipDefs set [_type, ["HKG3", si0, isGeneral, 1, "hkg3mag", "\o\guns\m_hkg3",5 ]]
+;_atHKG3 = _type
+;_type = _type + 1
+
+equipDefs set [_type, ["M60", si0, isGeneral, 2, "M60", "\dtaExt\equip\m\m_m60",5 ]]
+_atM60 = _type
+_type = _type + 1
+
+equipDefs set [_type, ["LAW", si0, isGeneral, 2, "LAWLauncher", "\dtaExt\equip\m\m_lawlauncher",25 ]]
+_atLAW = _type
+_type = _type + 1
+
+equipDefs set [_type, ["CarlGustav", si0, isGeneral, 6, "CarlGustavLauncher", "\dtaExt\equip\m\m_carlgustavlauncher",60 ]]
+_atCarlGustav = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Stinger", si0, isGeneral, 6, "AALauncher", "\dtaExt\equip\m\m_aalauncher",50 ]]
+_atStinger = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Ingram Mag", si0, isHandgun, 1, "IngramMag", "\O\Guns\m_uzi.paa",0 ]]
+_atIngram = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Beretta Mag", si0, isHandgun, 1, "BerettaMag", "\O\Guns\zasobnik",0 ]]
+_atBeretta = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Glock Mag", si0, isHandgun, 1, "GlockMag", "\O\Guns\zasobnik",0 ]]
+_atGlock = _type
+_type = _type + 1
+
+equipDefs set [_type, ["GlockS Mag", si0, isHandgun, 1, "GlockSMag", "\O\Guns\zasobnik.paa",0 ]]
+_atGlockS = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Revolver Mag", si0, isHandgun, 1, "RevolverMag", "\O_wp\m_revolever.paa",0 ]]
+_atRevolver = _type
+_type = _type + 1
+
+; EAST AMMO
+
+equipDefs set [_type, ["AK47", si1, isGeneral, 1, "AK47", "\dtaExt\equip\m\m_ak47",5 ]]
+_atAK47 = _type
+_type = _type + 1
+
+equipDefs set [_type, ["AK74", si1, isGeneral, 1, "AK74", "\dtaExt\equip\m\m_ak74",5 ]]
+_atAK74 = _type
+_type = _type + 1
+
+equipDefs set [_type, ["AK107", si1, isGeneral, 1, "kegak107mag", "\kegak107\gear2",10 ]]
+_atAK107 = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Dragunov", si1, isGeneral, 1, "SVDDragunov", "\dtaExt\equip\m\m_svddragunov",20 ]]
+_atDragunov = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Bizon", si1, isGeneral, 1, "BizonMag", "\bizon\m_bizon",5 ]]
+_atBizon = _type
+_type = _type + 1
+
+equipDefs set [_type, ["PK", si1, isGeneral, 2, "PK", "\dtaExt\equip\m\m_pk",5 ]]
+_atPK = _type
+_type = _type + 1
+
+equipDefs set [_type, ["6G30", si1, isGeneral, 4, "6g30Magazine", "\6G30\m_6g30",10 ]]
+_at6G30 = _type
+_type = _type + 1
+
+equipDefs set [_type, ["RPG", si1, isGeneral, 2, "RPGLauncher", "\dtaExt\equip\m\m_rpglauncher",25 ]]
+_atRPG = _type
+_type = _type + 1
+
+equipDefs set [_type, ["AT4", si1, isGeneral, 6, "AT4Launcher", "\dtaExt\equip\m\m_at4launcher",60 ]]
+_atAT4 = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Strela", si1, isGeneral, 6, "9K32Launcher", "\dtaExt\equip\m\m_9k32launcher",100 ]]
+_atStrela = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Skorpion Mag", si1, isHandgun, 1, "SkorpionMag", "\O\Guns\zasobnik",0 ]]
+_atSkorpion = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Tokarev Mag", si1, isHandgun, 1, "TokarevMag", "\O\Guns\zasobnik",0 ]]
+_atTokarev = _type
+_type = _type + 1
+
+; BOTH AMMO
+
+;equipDefs set [_type, ["G36", siBoth, isGeneral, 1, "G36aMag", "\g36a\m_g36",15 ]]
+;_atG36 = _type
+;_type = _type + 1
+
+equipDefs set [_type, ["UZI", siBoth, isGeneral, 1, "UZIMag", "\O\Guns\m_uzi",5 ]]
+_atUZI = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Remigton", siBoth, isGeneral, 1, "HuntingRifleMag", "\dtaExt\equip\m\m_m21",5 ]]
+_atHRiffle = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Ball", siBoth, isGeneral, 1, "KozliceBall", "\kozl\m_kozlice2.paa",2 ]]
+_atKozliceBall = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Shell", siBoth, isGeneral, 1, "KozliceShell", "\kozl\m_kozlice1.paa",2 ]]
+_atKozliceShell = _type
+_type = _type + 1
+
+;equipDefs set [_type, ["Rifle Mortar", siBoth, isGeneral, 2, "Mortar", "\dtaExt\equip\m\m_mortar",5 ]]
+;_atMortar = _type
+;_type = _type + 1
+
+equipDefs set [_type, ["Rifle Grenade", siBoth, isGeneral, 2, "GrenadeLauncher", "\dtaExt\equip\m\m_grenadelauncher",5 ]]
+_atGrenade = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Flare", siBoth, isGeneral, 1, "Flare", "\dtaExt\equip\m\m_flare",0 ]]
+_atFlare = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Flare Green", siBoth, isGeneral, 1, "FlareGreen", "\dtaExt\equip\m\m_flaregreen",0 ]]
+_atFlareGreen = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Flare Red", siBoth, isGeneral, 1, "FlareRed", "\dtaExt\equip\m\m_flarered",0 ]]
+_atFlareRed = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Flare Yellow", siBoth, isGeneral, 1, "FlareYellow", "\dtaExt\equip\m\m_flareyellow",0 ]]
+_atFlareYellow = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Laser", siBoth, isGeneral, 6, "LaserDesignator", "\dtaExt\equip\m\m_carlgustavlauncher",50 ]]
+_atLaser = _type
+_type = _type + 1
+
+firstEquip = _type
+
+equipDefs set [_type, ["Binoculars", siBoth, isOptics, 1, "Binocular", "\dtaExt\equip\w\w_binocular",0 ]]
+etBinocs = _type
+_type = _type + 1
+
+equipDefs set [_type, ["NV Goggles", siBoth, isOptics, 1, "NVGoggles", "\dtaExt\equip\w\w_nvgoggles",0 ]]
+_type = _type + 1
+
+equipDefs set [_type, ["Hand Grenade", siBoth, isGeneral, 1, "HandGrenade", "\dtaExt\equip\m\m_handgrenade",0 ]]
+_type = _type + 1
+
+equipDefs set [_type, ["Mine", siBoth, isGeneral, 2, magMine, "\dtaExt\equip\m\m_mine",20 ]]
+etMine = _type
+_type = _type + 1
+
+equipDefs set [_type, ["Satchel", siBoth, isGeneral, 2, "Pipebomb", "\dtaExt\equip\m\m_pipebomb",20 ]]
+_type = _type + 1
+
+equipDefs set [_type, ["Smoke Shell", siBoth, isGeneral, 1, "SmokeShell", "\dtaExt\equip\m\m_smokeshell",0 ]]
+_type = _type + 1
+
+equipDefs set [_type, ["Smoke Shell Green", siBoth, isGeneral, 1, "SmokeShellGreen", "\dtaExt\equip\m\m_smokeshell",0 ]]
+_type = _type + 1
+
+equipDefs set [_type, ["Smoke Shell Red", siBoth, isGeneral, 1, "SmokeShellRed", "\dtaExt\equip\m\m_smokeshellred",0 ]]
+_type = _type + 1
+
+weaponDefs = []
+
+wdName = 0
+wdSides = 1
+wdType = 2
+wdObject = 3
+wdImage = 4
+wdAmmoTypes = 5
+wdcost = 6
+
+; weapon types
+wtPrimary = 0
+wtPrimaryOnly = 1
+wtSecondary = 2
+wtHandgun = 3
+
+; WEAPONS
+
+_type = 0
+
+; WEST WEAPONS
+
+
+weaponDefs set [_type, ["M16", si0, wtPrimary, "M16", "\dtaExt\equip\w\w_m16", [[_atM16,4]] ,10]]
+_type = _type + 1
+
+weaponDefs set [_type, ["M16GL", si0, wtPrimary, "M16GrenadeLauncher", "\dtaExt\equip\w\w_M16GrenadeLauncher", [[_atM16,4],[_atGrenade,4],[_atFlare,0],[_atFlareGreen,0],[_atFlareRed,0],[_atFlareYellow,0]],15]]
+_type = _type + 1
+
+weaponDefs set [_type, ["M21", si0, wtPrimary, "M21", "\dtaExt\equip\w\w_m21", [[_atM21,4]],70]]
+_type = _type + 1
+
+weaponDefs set [_type, ["HK", si0, wtPrimary, "HK", "\dtaExt\equip\w\w_hk", [[_atHK,4]],30]]
+_type = _type + 1
+
+weaponDefs set [_type, ["M4", si0, wtPrimary, "M4", "\dtaExt\equip\w\w_m4", [[_atM4,4]],15 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["XMS", si0, wtPrimary, "XMS", "\XMS\w_XMS", [[_atM4,4]],40 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["M60", si0, wtPrimaryOnly, "M60", "\dtaExt\equip\w\w_m60", [[_atM60,4]],20 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["MM1", si0, wtPrimaryOnly, "MM1", "\MM-1\mm-1", [[_atMM1,1]],20 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["LAW", si0, wtSecondary, "LAWLauncher", "\dtaExt\equip\w\w_lawlauncher", [[_atLAW,3]],40 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["CarlGustav", si0, wtSecondary, "CarlGustavLauncher", "\dtaExt\equip\w\w_carlgustavlauncher", [[_atCarlGustav,1]],70 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["Stinger", si0, wtSecondary, "AALauncher", "\dtaExt\equip\w\w_aalauncher", [[_atStinger,1]],50 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["Ingram", si0, wtHandgun, "Ingram", "\O_wp\w_ingram.paa", [[_atIngram,4]],0 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["Beretta", si0, wtHandgun, "Beretta", "\O\Guns\bereta", [[_atBeretta,4]],0 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["Glock", si0, wtHandgun, "Glock", "\O\Guns\Glock", [[_atGlock,4]],0 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["GlockS", si0, wtHandgun, "GlockS", "\O_wp\w_Glocksilent.paa", [[_atGlockS,4]],0 ]]
+_type = _type + 1
+
+;weaponDefs set [_type, ["Revolver", si0, wtHandgun, "Revolver", "\O_wp\w_sam.paa", [[_atRevolver,4]],0 ]]
+;_type = _type + 1
+
+; EAST WEAPONS
+
+weaponDefs set [_type, ["AK74", si1, wtPrimary, "AK74", "\dtaExt\equip\w\w_ak74", [[_atAK74,4]],10 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["AK74GL", si1, wtPrimary, "AK74GrenadeLauncher", "\dtaExt\equip\w\w_ak74grenadelauncher", [[_atAK74,4],[_atGrenade,4],[_atFlare,0],[_atFlareGreen,0],[_atFlareRed,0],[_atFlareYellow,0]],15 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["AK107", si1, wtPrimary, "kegak107", "\KEGak107\gear1", [[_atAK107,4]],40 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["Dragunov", si1, wtPrimary, "SVDDragunov", "\dtaExt\equip\w\w_svddragunov", [[_atDragunov,4]],70 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["Bizon", si1, wtPrimary, "bizon", "\bizon\w_bizon", [[_atBizon,4]],30 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["6G30", si1, wtPrimaryOnly, "6G30", "\6G30\6g30", [[_at6G30,2]],20 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["PK", si1, wtPrimaryOnly, "PK", "\dtaExt\equip\w\w_pk", [[_atPK,4]],20 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["AK74 SU", si1, wtPrimary, "AK74SU", "\dtaExt\equip\w\w_ak74su", [[_atAK74,4]],15 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["RPG", si1, wtSecondary, "RPGLauncher", "\dtaExt\equip\w\w_rpglauncher", [[_atRPG,3]],40 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["AT4", si1, wtSecondary, "AT4Launcher", "\dtaExt\equip\w\w_at4launcher", [[_atAT4,1]],70 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["Strela", si1, wtSecondary, "9K32Launcher", "\dtaExt\equip\w\w_9k32launcher", [[_atStrela,1]],100 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["Skorpion", si1, wtHandgun, "Skorpion", "\O\Guns\Skorpion", [[_atSkorpion,4]],0 ]]
+_type = _type + 1
+
+weaponDefs set [_type, ["Tokarev", si1, wtHandgun, "Tokarev", "\O\Guns\Tokarev", [[_atTokarev,4]],0 ]]
+_type = _type + 1
+
+; BOTH WEAPONS
+
+;weaponDefs set [_type, ["G36", siBoth, wtPrimary, "G36A", "\G36A\w_g36", [[_atG36,4]],50 ]]
+;_type = _type + 1
+
+weaponDefs set [_type, ["UZI", siBoth, wtPrimary, "UZI", "\O\Guns\w_uzi", [[_atUZI,4]],20 ]]
+ _type = _type + 1
+
+ weaponDefs set [_type, ["Remigton", siBoth, wtPrimary, "HuntingRifle", "\O_wp\w_remigton", [[_atHRiffle,4]],100 ]]
+ _type = _type + 1
+
+ weaponDefs set [_type, ["Kozlice", siBoth, wtPrimary, "Kozlice", "\kozl\w_kozlice.paa", [[_atKozliceShell,3],[_atKozliceBall,1]],20 ]]
+ _type = _type + 1
+
+weaponDefs set [_type, ["Laser", siBoth, wtSecondary, "LaserDesignator", "\dtaExt\equip\w\w_carlgustavlauncher", [[_atLaser,1]],50 ]]
+_type = _type + 1
+

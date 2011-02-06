@@ -1,0 +1,49 @@
+; args: [_objectDestroyed, _type, _si]
+
+_objectDestroyed = _this select 0
+_type = _this select 1
+_si = _this select 2
+
+_model = typeOf _objectDestroyed;
+_pos = getPos _objectDestroyed;
+_dir = getDir _objectDestroyed;
+_temp = _model camCreate _pos;
+_temp setDir _dir;
+_temp setPos _pos;
+_vect = [_pos, getPos _temp] call funcVectorSub;
+_posCorrect = [_pos, _vect] call funcVectorAdd;
+_posCorrect set [2, 0];
+deleteVehicle _temp;
+
+_structDesc = structDefs select _type
+
+_posStruct = _posCorrect
+_posStruct set [2, 0]
+
+_parts = _structDesc select ([sdObjects0, sdObjects1] select (_si == si1))
+
+_objects = []
+
+_part = _parts select 0
+_object = (_part select 0) createVehicle _posStruct
+_object setDir _dir
+_object setPos _posStruct
+		
+? (isNull gunner _object): (gunMatrix select _si) set [count (gunMatrix select _si), _object]
+
+_objects set [count _objects, _object]
+
+_index = count ((structMatrix select _si) select _type)
+((structMatrix select _si) select _type) set [_index, _objects select 0]
+
+_index = count structuresServer
+structuresServer set [_index, [_objects, _type] ]
+
+{ [_type, _si, _objects, "Repaired"] exec _x } foreach (_structDesc select sdScriptsServer)
+
+{ _group = _x; { _group reveal _x } foreach _objects } foreach (groupAiMatrix select _si)
+
+[_objects select 0, _type, _si, 0] exec "Server\SendStructBuilt.sqs"
+
+~2
+deleteVehicle _objectDestroyed

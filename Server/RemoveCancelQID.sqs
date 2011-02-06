@@ -1,0 +1,6 @@
+; args: [qid, si]
+
+_qid = _this select 0
+_si = _this select 1
+~1*60
+qidCancel set [ _si, (qidCancel select _si) - [_qid] ]

@@ -1,0 +1,65 @@
+; args: [unit, si, gi, [ti, dist, dir]]
+
+; player globalchat format ["Order HoldTown.sqs: _this = %1", _this]
+
+_unit = _this select 0
+_si = _this select 1
+_gi = _this select 2
+_params = _this select 3
+
+_ti = _params select 0
+_dist = 50*((_params select 1) + 1)
+_iDir = _params select 2
+
+_vectRnd = [[0,0], 0, 25] call funcGetRandomPos
+
+_flag = (towns select _ti) select tdFlag
+_posFlag = getPos _flag
+
+_idOrder = ((orderMatrix select _si) select _gi) select 0
+_timeCalcPos = 0
+
+#WaitReady
+~2
+? call busyCheck : goto "WaitReady"
+
+_timeCheckSupport = time + 30 + random 60
+_sleep = 30
+
+#Update
+	? !(alive _unit) : exit
+	? _idOrder != ((orderMatrix select _si) select _gi) select 0 : exit
+
+	_vehicle = vehicle _unit
+
+	? _unit != driver _vehicle : goto "Sleep"
+
+	? time > _timeCheckSupport : _timeCheckSupport = time + timeCheckSupport; [_unit, _si, _gi] exec "Server\AI_CheckSupport.sqs"; goto "Sleep"
+
+  ? time < _timeCalcPos : goto "CheckMove"
+	? ((towns select _ti) select tdSide) != _si && (random 1) < 0.8 : _timeCalcPos = time + 60; _posMove = [_posFlag, 5, 5] call funcGetRandomPos; goto "CheckMove"
+  _timeCalcPos = time + 120
+  ? (random 1) < 0.2 : _posMove = [_posFlag, 10, 10] call funcGetRandomPos; goto "CheckMove"
+  _c = count units _unit
+  _i = [_unit, units _unit] call funcGetIndex
+  ? _iDir == 0 : _dir = _i*360/_c
+  ? _iDir != 0 : _dir = (_iDir - 1)*45 - 60 + _i*120/_c
+  _posMove = [(_posFlag select 0) + _dist*(sin _dir), (_posFlag select 1) + _dist*(cos _dir)]
+	_posMove = [_posMove, _vectRnd] call funcVectorAdd
+	
+	#CheckMove
+	_distToDest = [getPos _unit, _posMove] call funcDistH
+	? _distToDest > 10 : goto "Move"
+	[_unit, true] exec "Server\StopAI.sqs"
+	[_unit, _si, _gi] call funcWatch
+  _sleep = 30
+  goto "Sleep"
+
+  #Move
+  [_unit, _posMove] call funcMoveAI
+	_sleep = [30, 0.1*_distToDest] select (_distToDest < 300)
+
+	#Sleep
+	~_sleep
+  ? call busyCheck : goto "Sleep"
+	goto "Update"

@@ -1,0 +1,74 @@
+; args: [vehicle, tug, index, slot, gi, si]
+
+_vehicle = _this select 0
+_heli = _this select 1
+_tugindex = _this select 2
+_tugslot = _this select 3
+_gi = _this select 4
+_si = _this select 5
+
+_attachDist = 20
+_speedDamageVert = 10
+_speedDiffDetachHorz = 15
+
+_vehicle setVelocity [0,0,1]
+
+#WaitForTakeOff
+	~0.1
+	_posHeli = getPos _heli
+
+	? isNull(((vehicleAttached select _tugindex) select tsTugged) select _tugslot) || !(alive _heli) || !(alive _vehicle) || !(local _vehicle): goto "Abort"
+
+	? ([getPos _heli, getPos _vehicle] call funcDistH) > 2*_attachDist : goto "Abort"
+
+	? _attachDist > (_posHeli select 2) : goto "WaitForTakeOff"
+
+#Airborne
+	~0.1
+	_posHeli = getPos _heli
+	_dirHeli = getDir _heli
+	_dirVehicle = getDir _vehicle
+	_posVehicle = [_posHeli select 0, _posHeli select 1, (_posHeli select 2) - _attachDist]
+	;_posVehicle = [20*sin(_dirHeli) + (_posHeli select 0), 20*cos(_dirHeli) + (_posHeli select 1), (_posHeli select 2) - 0]
+	
+	? (_posVehicle select 2 < 0): goto "Abort"
+
+	_vDisp = [_posVehicle, getPos _vehicle] call funcVectorSub
+	_vDispLength = _vDisp call funcVectorLength
+	_vVelAdd = [_vDisp, _vDispLength/20] call funcVectorScale
+	
+	_velHeli = velocity _heli
+	
+	_velVehicle = velocity _vehicle
+	_speedDiffHorz = ([[_velVehicle select 0, _velVehicle select 1], [_velHeli select 0, _velHeli select 1]] call funcVectorSub) call funcVectorLength
+	? _speedDiffHorz > _speedDiffDetachHorz: goto "Abort"
+  ? ([getPos _heli, getPos _vehicle] call funcDistH) > 2*_attachDist : goto "Abort"
+
+	_dirDiff = _dirVehicle - _dirHeli
+	? (_dirDiff > 180): _dirDiff = _dirDiff - 360
+	? (_dirDiff < -180): _dirDiff = _dirDiff + 360
+	? (_dirDiff > 1): _vehicle setDir (-1 + getDir _vehicle)
+	? (_dirDiff < -1): _vehicle setDir (1 + getDir _vehicle)
+	_vehicle setVelocity ([[velocity _heli, 0.9] call funcVectorScale, _vVelAdd] call funcVectorAdd)
+	
+	? isNull(((vehicleAttached select _tugindex) select tsTugged) select _tugslot) || !(alive _heli) || !(alive _vehicle) || !(local _vehicle): goto "Abort"
+	goto "Airborne"
+
+#Abort
+	((vehicleAttached select _tugindex) select tsTugged) set [_tugslot, objNull]
+	[_vehicle, _gi, _si] exec "Common\SendVehicleDetached.sqs"
+	_velVehicle = velocity _vehicle
+	_velVehicle set [2, (_velVehicle select 2) + 1]
+	_vehicle setVelocity _velVehicle
+	_velVehicle = velocity _vehicle
+
+	#CheckFallDamage
+		~1
+		_speedVert = _velVehicle select 2
+		_speedDiffVert = abs(_speedVert - ((velocity _vehicle) select 2))
+		;player globalchat format ["speed=%1 diff=%2", _speed, _speedDiff]
+
+		? _speedDiffVert > _speedDamageVert: _damage = _speedDiffVert/(2*_speedDamageVert); _vehicle setDamage (_damage + damage _vehicle)
+		_velVehicle = velocity _vehicle
+
+		? ((abs _speedVert) > 5 || ((getPos _vehicle) select 2) > 5): goto "CheckFallDamage"

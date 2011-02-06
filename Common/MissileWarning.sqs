@@ -1,0 +1,7 @@
+; args: [vehicle, type, si]
+
+_v = _this select 0
+
+?!(alive _v) : exit
+
+_v addEventHandler ["IncomingMissile" ,{_this exec "Player\Event IncomingMissileToAir.sqs"}]

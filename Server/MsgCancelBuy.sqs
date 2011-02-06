@@ -1,0 +1,35 @@
+_lastQID = -1
+_lastSI = -1
+
+#Start
+
+@(pvCancelBuy != -1)
+
+_value = pvCancelBuy
+
+pvCancelBuy = -1
+
+_type = _value % 200
+_value = _value - _type
+
+_qid = (_value % (200*100))/(200)
+_value = _value - _qid*(200)
+
+_gi = (_value % (200*100*18))/(200*100)
+_value = _value - _gi*(200*100)
+
+_si = _value/(200*100*18)
+
+; player globalchat format["qidCancel = %1", qidCancel]
+; ? _qid == _lastQID && _lastSI == _si : goto "Start"
+? _qid in (qidCancel select _si) : [_qid, _si, 0] exec "Server\SendQueueRem.sqs"; goto "Start"
+
+_lastQID = _qid
+_lastSI = _si 
+
+(qidCancel select _si) set [count (qidCancel select _si), _qid]
+[_qid, _si, 0] exec "Server\SendQueueRem.sqs"
+
+; send info
+
+goto "Start"

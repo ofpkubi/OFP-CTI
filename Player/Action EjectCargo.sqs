@@ -1,0 +1,10 @@
+; args: [vehicle, unit, idAction]
+
+_vehicle = _this select 0
+_unit = _this select 1
+_id = _this select 2
+
+? !(alive _vehicle): _vehicle removeAction _id
+? _unit != driver _vehicle : _unit groupchat "Eject Cargo Failed, unit must be driver of vehicle."; exit
+
+[_vehicle, siPlayer] exec "Common\EjectCargo.sqs"

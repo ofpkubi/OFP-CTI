@@ -1,0 +1,79 @@
+;player globalchat "InitSpectator.sqs Enter"
+
+_unit = _this
+
+? (_unit != player): player globalchat "Exiting InitSpectator.sqs"; Exit
+
+forceMap true
+
+moneySideTotal = [0, 0]
+moneySideSpent = [0, 0]
+
+; MESSAGE HANDLERS (PLAYERS)
+[] exec "Player\MsgMoneyStatus0.sqs"
+[] exec "Player\MsgMoneyStatus1.sqs"
+[] exec "Player\MsgMoneyStatus2.sqs"
+[] exec "Player\MsgMoneyStatus3.sqs"
+[] exec "Player\MsgMoneyStatus4.sqs"
+[] exec "Player\MsgMoneyStatus5.sqs"
+[] exec "Player\MsgMoneyStatus6.sqs"
+[] exec "Player\MsgMoneyStatus7.sqs"
+[] exec "Player\MsgMoneyStatus8.sqs"
+[] exec "Player\MsgMoneyStatus9.sqs"
+
+[] exec "Player\MsgMoneySideTotal.sqs"
+[] exec "Player\MsgMoneySideSpent.sqs"
+[] exec "Player\MsgMoneyTransferred.sqs"
+[] exec "Player\MsgSetTownSide.sqs"
+[] exec "Player\MsgStructBuilt.sqs"
+[] exec "Player\MsgInfo0.sqs"
+[] exec "Player\MsgInfo1.sqs"
+[] exec "Player\MsgInfo2.sqs"
+[] exec "Player\MsgInfo3.sqs"
+[] exec "Player\MsgArtilleryShellDetected.sqs"
+
+playerSide = civilian
+siPlayer = siCiv
+
+[siPlayer] exec "Player\InitMarkers.sqs"
+[] exec "Player\InitGUIControlIDs.sqs"
+
+;init spectator functions
+funcCalcMapPos = preprocessFile "Player\CalcMapPos.sqf"
+funcCalcTownDirDistFromPos = preprocessFile "Player\CalcTownDirDistFromPos.sqf"
+funcCalcScore = preprocessFile "Player\CalcScore.sqf"
+funcGetTimeString = preprocessFile "Player\GetTimeString.sqf"
+funcMapClickSpectator = preprocessFile "Player\MapClickSpectator.sqf"
+funcInitVehicleMarker = preprocessFile "Player\InitVehicleMarker.sqf"
+
+bShowLog = false
+bShowAll = true
+bLockDir = true
+logSpec = []
+
+;game has begun after this pause
+~0.1
+
+mapAnimClear
+mapAnimAdd [0, 1.0, posCenter]
+mapAnimCommit
+@mapAnimDone
+
+onMapSingleClick {[_pos, _units, _alt, _shift] call funcMapClickSpectator}
+
+player groupchat "Waiting for start data ..."
+@( !(isNull (mhq select si0)) && !(isNull (mhq select si1)) )
+player groupchat "Start data received."
+
+[siPlayer] exec "Player\UpdateUnitMarkers.sqs"
+
+forceMap false
+
+; add weapon used for reload detection
+_unit addWeapon "Ingram"
+{ _unit addMagazine "IngramMag" } forEach [1]
+_unit selectWeapon "Ingram"
+
+[_unit] exec "Player\UpdateSpectator.sqs"
+
+[] exec "Player\DisplayGameInfo.sqs"

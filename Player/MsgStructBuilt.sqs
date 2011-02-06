@@ -1,0 +1,32 @@
+#Start
+
+@(pvStructBuilt != -1)
+
+_value = pvStructBuilt
+_object = pvStructBuilt_Object
+
+pvStructBuilt = -1
+
+_type = _value % 1000
+_value = _value - _type
+
+_new = (_value % (1000*2))/1000
+_value = _value - _new*1000
+
+_si = _value/(1000*2)
+
+? (_new == 1): (structsBuilt select _si) set [ _type, 1 + ((structsBuilt select _si) select _type) ]
+
+? isNull gunner _object : [_object] exec "Common\AddRearmData.sqs"
+
+; only add for non local players since it is already done on server
+? !(local LocalServerObject): _index = count ((structMatrix select _si) select _type); ((structMatrix select _si) select _type) set [_index, _object]
+
+; ? (_si != siPlayer): goto "Start"
+
+_desc = structDefs select _type
+
+{ [_object, _type, _si] exec _x } foreach (_desc select sdScriptsPlayer)
+
+goto "Start"
+

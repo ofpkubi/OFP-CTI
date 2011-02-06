@@ -1,0 +1,16 @@
+; args: pos
+
+_pos = _this
+
+_id = enemyMarkers select 0
+_marker = format ["EnemySpotted_%1", _id]
+
+enemyMarkers = enemyMarkers - [_id]
+enemyMarkers set [count enemyMarkers, _id]
+
+_marker setMarkerPos _pos
+
+~(2*60)
+
+_posAfter = getMarkerPos _marker
+? ((_pos select 0) == (_posAfter select 0)) && ((_pos select 1) == (_posAfter select 1)): _marker setMarkerPos hiddenMarkerPos

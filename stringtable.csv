@@ -1,0 +1,16 @@
+LANGUAGE,English
+
+STR_CRCTI_VER, "CRCTI _RES-Z"
+STR_CRCTI_MOD, "atres_z"
+
+STR_MISSION_NAME, "crCTI @Res-z v3 Everon"
+STR_0_START_0, "West North"
+STR_0_START_0_Norm, "West North, Norm"
+STR_0_START_0_2H, "West North, 2h"
+STR_0_START_0_3H, "West North, 3h"
+STR_0_START_0_4H, "West North, 4h"
+STR_0_START_1, "West South"
+STR_0_START_1_Norm, "West South, Norm"
+STR_0_START_1_2H, "West South, 2h"
+STR_0_START_1_3H, "West South, 3h"
+STR_0_START_1_4H, "West South, 4h"

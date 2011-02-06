@@ -1,0 +1,22 @@
+; args: [params]
+
+_value = _this select 0
+
+_type = (_value % 20)
+_value = _value - _type
+
+_setting = (_value % (20*20))/(20)
+_value = _value - _setting*(20)
+
+_gi = (_value % (20*20*18))/(20*20)
+_value = _value - _gi*(20*20)
+
+_si = _value/(20*20*18)
+
+? _si != siPlayer : exit
+_group = (groupMatrix select _si) select _gi
+_nameGroup = (groupNameMatrix select _si) select _gi
+_nameType = (aiSettingDefs select _type) select 0
+_nameSetting = ((aiSettingDefs select _type) select 1) select _setting
+
+(leader _group) sidechat format["Acknowledged: %1 at %2", _nameType, _nameSetting]

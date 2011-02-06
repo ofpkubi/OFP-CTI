@@ -1,0 +1,363 @@
+; args: [_factory, _type]
+
+_factory = _this select 0
+_typeFactory = _this select 1
+
+_typeUnit = -1
+_typeFactoryLast = -1
+_timeUpdateFactoryList = 0
+_si = siPlayer
+
+_controlCenters = [siPlayer, stComm] call funcGetWorkingStructures
+
+_remote = false
+? (isNull _factory): _remote = true
+? (_remote && (count _controlCenters) == 0): Hint "No Working Comm Center"; Exit
+
+_unit = player
+_delay = 0.2
+distMaxCC = 200
+
+_nameFactory = "Buy Units"
+
+nShow = 2
+_nShow = nShow
+
+_qPlayer = []
+
+? (!_remote): _nameFactory = (structDefs select _typeFactory) select sdName
+
+_groups = groupMatrix select siPlayer
+_groupsAI = groupAiMatrix select siPlayer
+_groupNames = groupNameMatrix select siPlayer
+_groupsMoney = groupMoneyMatrix select siPlayer
+
+_idcGroups = IDC_LB+1
+_idcGroupsLabel = IDC_TEXT+1
+_idcGroupsBG = IDC_BG+1
+_idcInUse = IDC_TEXT+2
+_idcMoney = IDC_TEXT+3
+_idcShowLabel = IDC_TEXT+4
+_idcShowInfBG = IDC_BG+2
+_idcShowInf = IDC_BTN+1
+_idcShowVehBG = IDC_BG+3
+_idcShowVeh = IDC_BTN+2
+_idcShowBothBG = IDC_BG+4
+_idcShowBoth = IDC_BTN+3
+_idcBuyBG = IDC_BG+6
+_idcBuy = IDC_BTN+5
+_idcDriverBG = IDC_BG+7
+_idcDriver = IDC_BTN+6
+_idcGunnerBG = IDC_BG+8
+_idcGunner = IDC_BTN+7
+_idcCommanderBG = IDC_BG+9
+_idcCommander = IDC_BTN+8
+_idcBuyMannedBG = IDC_BG+10
+_idcBuyManned = IDC_BTN+9
+_idcFactoryLabel = IDC_TEXT+5
+_idcFactoryBG = IDC_BG+11
+_idcFactory = IDC_LB+10
+_idcUnits = IDC_LB+2
+_idcCancel = IDC_BTN+10
+_idcQueue = IDC_LB+3
+
+#InitMenu
+
+	_dialog = CreateDialog "FactoryMenu"
+
+	ctrlSetText [IDC_TITLE, _nameFactory]
+
+	{ ctrlShow [_x, false] } foreach [ _idcGroups, _idcGroupsLabel, _idcGroupsBG ]
+	{ ctrlShow [_x, _remote] } foreach [ _idcShowInf, _idcShowVeh, _idcShowBoth ]
+	{ ctrlShow [_x, false] } foreach [ _idcBuy, _idcBuyBG ]
+	{ ctrlShow [_x, false] } foreach [ _idcBuyManned, _idcBuyMannedBG, _idcDriver, _idcDriverBG, _idcGunner, _idcGunnerBG, _idcCOmmander, _idcCommanderBG ]
+	
+	? !_remote : { ctrlShow [_x, false] } foreach [ _idcShowLabel, _idcShowInf, _idcShowInfBG, _idcShowVeh, _idcShowVehBG, _idcShowBoth, _idcShowBothBG, _idcFactory, _idcFactoryBG, _idcFactoryLabel ]
+
+	_selectedGroup = giPlayer
+	_selectedUnit = -1
+	_lastSelQID = -1
+	? (_remote): _lastWorkingFactoryTypes = []; goto "Update"
+
+	lbClear _idcUnits
+
+	? _typeFactory == stBarracks : _id=maxUnitTypes; { if (count _x > 0) then { _lbi = lbAdd[_idcUnits, format["cs%1 $%2 %3", _id-maxUnitTypes, costCustom, _x select 0]]; lbSetValue [_idcUnits, _lbi, _id] }; _id=_id+1 } foreach infCustom
+
+	_index = 0
+	_count = count unitDefs
+	#AddUnitFactory
+
+		_unitDesc = unitDefs select _index
+		_sideUnit = _unitDesc select udSide
+		
+		? (_sideUnit != siPlayer): goto "SkipUnitFactory"
+		? ((_unitDesc select udName) == "AI_ONLY"): goto "SkipUnitFactory"
+		? (_typeFactory != (_unitDesc select udFactoryType)): goto "SkipUnitFactory"
+		
+		_name = _unitDesc select udName
+		_cost = _unitDesc select udCost
+
+		_manning = _unitDesc select udCrew
+		
+		_spacer = ""
+		? (_cost < 100): _spacer = _spacer + " "
+		? (_cost < 1000): _spacer = _spacer + " "
+		_text = Format["$%1 %2%3", _cost, _spacer, _name]
+
+		_lbi = lbAdd[_idcUnits,_text]
+		lbSetValue [_idcUnits, _lbi, _index]
+		lbSetPicture [_idcUnits, _lbi, (unitDefs select _index) select udImage]
+
+		? (lastSelectedUnitType == _index): lbSetCurSel [_idcUnits, _lbi]
+
+		#SkipUnitFactory
+
+		_index = _index + 1
+		? (_index < _count):goto "AddUnitFactory"
+		
+#Update
+	_controlCenters = [siPlayer, stComm] call funcGetWorkingStructures
+	? _remote && (count _controlCenters) == 0 : goto "CloseDialog"
+	? !(alive _unit): goto "CloseDialog"
+	? (not _remote) && !(alive _factory): goto "CloseDialog"
+	? !(dialog): goto "CloseDialog"
+	
+	? !_remote : _qLen = _factory call funcGetQueueLength; if (_qLen > 0) then { ctrlSetText[_idcInUse, format["Q %1", _qLen] ] } else { ctrlSetText[_idcInUse, ""] }
+	
+	_money = _groupsMoney select giPlayer
+	_text = format ["$%1", _money]
+	ctrlSetText [_idcMoney, _text]
+
+  ? _remote : ctrlShow [_idcShowInfBG, _nShow == 0]; ctrlShow [_idcShowVehBG, _nShow == 1]; ctrlShow [_idcShowBothBG, _nShow == 2]
+	? _remote && _nShow != nShow : goto "UpdateAvailableUnits"
+
+	_lastSelQID = -1
+	? (lbCurSel _idcQueue) < (lbSize _idcQueue) : _lastSelQID = lbValue [_idcQueue, lbCurSel _idcQueue]
+	? (count _qPlayer) != (count qPlayer) : goto "UpdateQueue"
+
+	#InitGroupList
+	? (groupPlayer == (groupCommander select siPlayer)): ctrlShow [_idcGroupsLabel, true]; ctrlShow [_idcGroups, true]; ctrlShow [_idcGroupsBG, true]
+	? !(ctrlVisible _idcGroups): goto "CheckFactoriesChanged"
+	? ((lbCurSel _idcGroups) >= 0): _selectedGroup = lbCurSel _idcGroups
+	_textGroups = []
+	_index = 0
+	_name = ""
+	{ if (_x in _groupsAI) then {_name="AI"}else{_name = name leader _x}; _groupName = _groupNames select _index; _sizeGroup = count units _x; _moneyGroup =  _groupsMoney select _index; _text = format["%1 %2 %3 $%4", _name, _groupName, _sizeGroup, _moneyGroup]; _textGroups set [_index, _text]; _index=_index+1	} foreach _groups
+	lbClear _idcGroups
+	{ lbAdd [_idcGroups, _x] } foreach _textGroups
+	lbSetCurSel [_idcGroups, _selectedGroup]
+
+	#CheckFactoriesChanged
+	? not _remote: goto "CheckUnitSelected"
+	_workingFactoryTypes = []
+	_types = [stBarracks, stLight, stHeavy, stAir]
+	_count = count _types
+	_index = 0
+	#CheckFactoryType
+	  _type = _types select _index
+	  _structs = [siPlayer, _type] call funcGetWorkingStructures
+	  ? ((count _structs) == 0): goto "CheckNextFactoryType"
+	  _nearControl = false
+	  { _res = [getPos _x, siPlayer, stComm] call funcGetClosestStructure; if ((_res select 1)<distMaxCC) then { _nearControl = true } } foreach _structs
+	  ? (_nearControl): _workingFactoryTypes = _workingFactoryTypes + [_type]
+	  #CheckNextFactoryType
+	  _index = _index + 1
+	  ? (_index < _count): goto "CheckFactoryType"
+	? (count (_workingFactoryTypes - _lastWorkingFactoryTypes) != 0 || count (_lastWorkingFactoryTypes - _workingFactoryTypes) != 0 ): _lastWorkingFactoryTypes = _workingFactoryTypes; goto "UpdateAvailableUnits"
+
+	#CheckUnitSelected
+	_selectedUnit = lbCurSel _idcUnits
+	? !(_selectedUnit < lbSize _idcUnits) : _selectedUnit = -1
+	? (_selectedUnit >= 0): goto "UnitSelected"
+	{ ctrlShow [_x, false] } foreach [ _idcBuy, _idcBuyBG ]
+	{ ctrlShow [_x, false] } foreach [ _idcBuyManned, _idcBuyMannedBG, _idcDriver, _idcDriverBG, _idcGunner, _idcGunnerBG, _idcCommander, _idcCommanderBG ]
+	lbClear _idcFactory
+	goto "NoUnitSelected"
+
+	#UnitSelected
+	_typeUnit = lbValue[_idcUnits, _selectedUnit]
+	lastSelectedUnitType = _typeUnit
+	? _typeUnit >= maxUnitTypes : _cost = costCustom; _manning = []; _typeFactory = stBarracks; goto "UnitSelectedCustom"
+	_cost = (unitDefs select _typeUnit) select udCost
+	_manning = (unitDefs select _typeUnit) select udCrew
+	_typeFactory = (unitDefs select _typeUnit) select udFactoryType
+	#UnitSelectedCustom
+	_bVehicle = (count _manning > 0)
+  ? (_bVehicle): goto "InitVehicleControls"
+	
+	#InitInfantryControls
+	ctrlSetText [_idcBuy, "Buy"]
+	{ ctrlShow [_x, true] } foreach [_idcBuy, _idcBuyBG]
+	{ ctrlShow [_x, false] } foreach [_idcBuyManned, _idcBuyMannedBG, _idcDriver, _idcDriverBG, _idcGunner, _idcGunnerBG, _idcCommander, _idcCommanderBG ]
+	goto "InitFactoryList"
+
+	#InitVehicleControls
+	_crewSlots = _manning select 0
+	_crewType = _manning select 1
+	ctrlSetText [_idcBuy, "Buy Empty"]
+	{ ctrlShow [_x, true] } foreach [_idcBuy, _idcBuyBG, _idcBuyManned, _idcBuyMannedBG ]
+	
+	? _crewSlots == 1 : ctrlShow [_idcDriver, true]; ctrlShow [_idcGunner, false]; ctrlShow [_idcCommander, false]
+	? _crewSlots == 2 : ctrlShow [_idcDriver, true]; ctrlShow [_idcGunner, true]; ctrlShow [_idcCommander, false]
+	? _crewSlots == 3 : ctrlShow [_idcDriver, true]; ctrlShow [_idcGunner, true]; ctrlShow [_idcCommander, true]
+
+	ctrlShow [_idcDriverBG, ctrlVisible _idcDriver && bMannedDriver]
+	ctrlShow [_idcGunnerBG, ctrlVisible _idcGunner && bMannedGunner]
+	ctrlShow [_idcCommanderBG, ctrlVisible _idcCommander && bMannedCommander]
+
+	_crewType = _manning select 1
+	_costManned = _cost
+	? (ctrlVisible _idcDriver && bMannedDriver): _costManned = _costManned + ((unitDefs select _crewType) select udCost)
+	? (ctrlVisible _idcGunner && bMannedGunner): _costManned = _costManned + ((unitDefs select _crewType) select udCost)
+	? (ctrlVisible _idcCommander && bMannedCommander): _costManned = _costManned + ((unitDefs select _crewType) select udCost)
+	
+	ctrlShow [_idcBuyManned, true]
+	ctrlShow [_idcBuyMannedBG, true]
+	ctrlSetText [_idcBuyManned, format["Buy Manned $%1", _costManned]]
+
+	#InitFactoryList
+	? not _remote: goto "FactoryNotFound"
+	? _typeFactory != _typeFactoryLast : goto "UpdateFactoryList"
+	? time > _timeUpdateFactoryList : goto "UpdateFactoryList"
+	
+	_selectedFactoryIndex = lbCurSel _idcFactory
+	? (_selectedFactoryIndex == -1): goto "NoFactorySelected"
+	_index = [_typeFactory, lastSelectedFactory select 0] call funcGetIndex
+	? (_index != -1): (lastSelectedFactory select 1) set [_index, _factories select _selectedFactoryIndex]
+	? (_index == -1): (lastSelectedFactory select 0) set [count (lastSelectedFactory select 0), _typeFactory]; (lastSelectedFactory select 1) set [count (lastSelectedFactory select 1), _factories select _selectedFactoryIndex]
+	#NoFactorySelected
+	
+	#RestoreLastSelectedFactory
+	_lastSelectedFactoryTypeIndex = [_typeFactory, lastSelectedFactory select 0] call funcGetIndex
+	? (_lastSelectedFactoryTypeIndex == -1): lbSetCurSel [_idcFactory, 0]; goto "FactoryNotFound"
+	_lastSelectedFactory = (lastSelectedFactory select 1) select _lastSelectedFactoryTypeIndex
+	_factoryIndex = [_lastSelectedFactory, _factories] call funcGetIndex
+	? (_factoryIndex != -1): lbSetCurSel [_idcFactory, _factoryIndex]
+	#FactoryNotFound
+
+
+	#NoUnitSelected
+
+	? bFactoryBuy : bFactoryBuy = false; goto "Buy"
+	? bFactoryBuyManned : bFactoryBuyManned = false; goto "BuyManned"
+	? bCancel : bCancel = false; goto "Cancel"
+
+	~_delay
+	goto "Update"
+
+#Buy
+	? (_typeUnit == -1): Hint "No Unit Selected"; goto "Update"
+  ? _typeUnit >= maxUnitTypes && _selectedGroup != giPlayer : hint "Custom soldiers can only be bought for player group"; goto "Update" 
+ 	? (_money < _cost): Hint format["Not Enough Money\nCost %1\nNeed %2", _cost, _cost - _money]; goto "Update"
+	_size = count units ((groupMatrix select _si) select _selectedGroup)
+	? (!_bVehicle && !(_size < maxGroupSize)): Hint format["Group Full\nMax Size: %1\nCurrent Size: %2", maxGroupSize, _size]; goto "Update"
+	? _remote && _factoryIndex == -1: Hint "No Factory Selected"; goto "Update"
+	? _remote: _factory = _factories select _factoryIndex
+	[_typeUnit, 0, 0, 0, _selectedGroup, _factory] exec "Player\BuyUnit.sqs"
+	goto "Update"
+
+#BuyManned
+	
+	? (_typeUnit == -1): Hint "No Unit Selected"; goto "Update"
+	? (_money < _costManned): Hint format["Not Enough Money\nCost %1\nNeed %2", _costManned, _costManned - _money]; goto "Update"
+	_unitsToBuild = 0
+	_driver = 0
+	? (_crewSlots > 0 && bMannedDriver): _driver = 1; _unitsToBuild = _unitsToBuild + 1
+	_gunner = 0
+	? (_crewSlots > 1 && bMannedGunner): _gunner = 1; _unitsToBuild = _unitsToBuild + 1
+	_commander = 0
+	? (_crewSlots > 2 && bMannedCommander): _commander = 1; _unitsToBuild = _unitsToBuild + 1
+
+	_size = count units ((groupMatrix select _si) select _selectedGroup)
+	? ((_size + _unitsToBuild) > maxGroupSize): Hint format["Group Full\nMax Size: %1\nCurrent Size: %2", maxGroupSize, _size]; goto "Update"
+
+	? _remote && _factoryIndex == -1: Hint "No Factory Selected"; goto "Update"
+	? _remote: _factory = _factories select _factoryIndex
+
+	[_typeUnit, _driver, _gunner, _commander, _selectedGroup, _factory] exec "Player\BuyUnit.sqs"
+	goto "Update"
+
+#CloseDialog
+	bFactoryBuy = false
+	bFactoryBuyManned = false
+	? (dialog): closeDialog 0
+	Exit
+
+#UpdateAvailableUnits
+	lbClear _idcUnits
+
+	_nShow = nShow
+
+	? (stBarracks in _workingFactoryTypes) && _nShow != 1 : _id=maxUnitTypes; { if (count _x > 0) then { _lbi = lbAdd[_idcUnits, format["cs%1 $%2 %3", _id-maxUnitTypes, costCustom, _x select 0]]; lbSetValue [_idcUnits, _lbi, _id] }; _id=_id+1 } foreach infCustom
+
+	_index = 0
+	_count = count unitDefs
+	#AddUnit
+
+		_unitDesc = unitDefs select _index
+		_sideUnit = _unitDesc select udSide
+		
+		? (_sideUnit != siPlayer): goto "SkipUnit"
+		? !((_unitDesc select udFactoryType) in _workingFactoryTypes): goto "SkipUnit"
+		
+		_name = _unitDesc select udName
+		_cost = _unitDesc select udCost
+
+		_manning = _unitDesc select udCrew
+		
+		? _nShow == 0 && (count _manning) > 0 : goto "SkipUnit"
+		? _nShow == 1 && (count _manning) == 0 : goto "SkipUnit"
+		
+		_spacer = ""
+		? (_cost < 100): _spacer = _spacer + " "
+		? (_cost < 1000): _spacer = _spacer + " "
+		_text = Format["$%1 %2%3", _cost, _spacer, _name]
+
+		_lbi = lbAdd[_idcUnits,_text]
+		lbSetValue [_idcUnits, _lbi, _index]
+		lbSetPicture [_idcUnits, _lbi, (unitDefs select _index) select udImage]
+
+		? (lastSelectedUnitType == _index): lbSetCurSel [_idcUnits, _lbi]
+
+		#SkipUnit
+
+		_index = _index + 1
+		? _index < _count : goto "AddUnit"
+	goto "Update"
+	
+#UpdateFactoryList
+	_typeFactoryLast = _typeFactory
+
+	ctrlSetText [_idcFactoryLabel, (structDefs select _typeFactory) select sdName]
+	_factories = [siPlayer, _typeFactory] call funcGetWorkingStructures
+	_index = 0; { _res = [getPos _x, siPlayer, stComm] call funcGetClosestStructure; if ((alive (_res select 0)) && ((_res select 1)>distMaxCC)) then { _factories set [_index, 0] }; _index = _index + 1 } foreach _factories
+	_factories = _factories - [0]
+
+	lbClear _idcFactory
+	{ _textPos = (getPos _x) call funcCalcTownDirDistFromPos; _textQ=""; _qLen = _x call funcGetQueueLength; if (_qLen > 0) then { _textQ = format["Q %1", _qLen] }; lbAdd [ _idcFactory, format["%1 %2", _textPos, _textQ] ] } foreach _factories
+  _timeUpdateFactoryList = time + 0.5
+	goto "Update"
+
+#UpdateQueue
+  _qPlayer = +qPlayer
+  _i = 0
+  _c = count _qPlayer
+  lbClear _idcQueue
+  #QueueAdd
+    ? _i >= _c : goto "Update"
+		_q = _qPlayer select _i
+		_qid = _q select 0
+		_type = _q select 1
+		? _type >= maxUnitTypes : _name = format["cs%1", _type - maxUnitTypes]
+		? _type < maxUnitTypes : _name = (unitDefs select _type) select udName
+		_lbi = lbAdd [ _idcQueue, _name ]
+		? _type < maxUnitTypes : lbSetPicture [ _idcQueue, _lbi, (unitDefs select _type) select udImage]
+		lbSetValue [_idcQueue, _lbi, _qid]
+    ? _lastSelQID == (_q select 0) : lbSetCurSel [_idcQueue, _lbi]
+    _i = _i + 1
+    goto "QueueAdd"
+
+#Cancel
+  ? _lastSelQID != -1 : [_lastSelQID, 0] exec "Player\SendCancelBuy.sqs"
+  goto "Update"
+ 

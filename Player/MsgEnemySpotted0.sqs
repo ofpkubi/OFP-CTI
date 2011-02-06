@@ -1,0 +1,31 @@
+; args: none
+
+_last = []
+
+#Start
+
+@!(isNull pvEnemy0)
+
+? (pvGameover != -1): Exit
+_enemy = pvEnemy0
+pvEnemy0 = objNull
+
+? _enemy in _last : goto "Start"
+
+_last set [count _last, _enemy]
+? (count _last) > 10 : _last set [0, objNull]; _last = _last - [objNull]
+
+_textType = ""
+? _enemy == (driver _enemy) && report == reportAll : _textType = "Infantry"
+? _enemy != (driver _enemy) && report < reportStructs  : _textType = "Vehicle"
+? _enemy != (driver _enemy) && ((getPos _enemy) select 2) > 10 && report < reportStructs: _textType = "Aircraft"
+{ if (_enemy in _x && report < reportNone) then { _textType = "Structure" } } foreach (structMatrix select si1)
+
+_textPos = (getPos _enemy) call funcCalcTownDirDistFromPos
+? _textType != "" : format["Enemy %1 spotted at %2", _textType, _textPos] call funcSideMsg
+(getPos _enemy) exec "Player\SetEnemyMarker.sqs"
+
+groupPlayer reveal _enemy
+; player globalchat format["ka = %1", player knowsAbout _enemy]
+
+goto "Start"

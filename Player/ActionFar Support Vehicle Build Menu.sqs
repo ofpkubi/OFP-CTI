@@ -1,0 +1,3 @@
+; args: [object, type]
+
+_this exec "Player\Dialog BuildStruct.sqs"

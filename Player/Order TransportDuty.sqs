@@ -1,0 +1,28 @@
+; args: [unit, pos, [distEject]]
+
+_unit = _this select 0
+_pos = _this select 1
+_distEject = 100*( 1 + ((_this select 2) select 0) )
+
+_transp = vehicle _unit
+
+? !(alive _unit) || _unit == _transp || _unit != driver _transp : exit
+
+_wps = []
+
+_i = 0
+while "((wpPlayer select _i) select 0) != -1" do { _wps set [_i, +(wpPlayer select _i)]; _i=_i+1 }
+
+? (count _wps) < 2 : exit
+
+_air = false
+_vt = _transp call funcGetUnitTypeFromObject
+? _vt == -1 : exit
+
+_unit groupchat format["Roger, performing transport duty, wp0 to wp%1", (count _wps)-1]
+
+? ((unitDefs select _vt) select udFactoryType) == stAir : _this exec "Player\Order TransportDuty Air.sqs"; exit
+
+_this exec "Player\Order TransportDuty Ground.sqs"
+
+exit

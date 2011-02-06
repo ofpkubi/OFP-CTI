@@ -1,0 +1,21 @@
+; args: none
+
+#Wait
+@(pvQueueLength != -1)
+
+_value = pvQueueLength
+_obj = pvQueueLength_Obj
+pvQueueLength = -1
+
+_len = _value % 100
+_value = _value - _len
+_si = _value / 100
+
+? _si != siPlayer : goto "Wait"
+
+_found = false
+{ if (_obj == (_x select 0)) then { _x set [1, _len]; _found = true } } foreach qLen
+
+? !_found : qLen set [count qLen, [_obj, _len]]
+
+goto "Wait"

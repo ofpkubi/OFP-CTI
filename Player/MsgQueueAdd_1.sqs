@@ -1,0 +1,10 @@
+#Start
+
+@(pvQueueAdd1 != -1)
+
+_value = pvQueueAdd1
+pvQueueAdd1 = -1
+
+_value exec "Player\MsgQueueAdd.sqs"
+
+goto "Start"

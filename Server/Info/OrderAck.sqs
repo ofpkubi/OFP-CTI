@@ -1,0 +1,12 @@
+; args: [si, gi, type]
+
+_si = _this select 0
+_gi= _this select 1
+_type = _this select 2
+
+_value = mtOrderAck
+_value = _value + (100)*_type
+_value = _value + (100*20)*_gi
+_value = _value + (100*20*18)*_si
+
+_value exec "Server\Info\SendInfoMsg.sqs"

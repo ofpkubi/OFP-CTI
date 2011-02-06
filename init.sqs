@@ -1,0 +1,415 @@
+; args : none
+
+dev = false
+debug = true
+
+; CONSTANTS
+si0 = 0
+si1 = 1
+siRes = 2
+siBoth = 3
+siCiv = 4
+siEnemy = [si1, si0]
+sideNames = ["West", "East", "Resistance", "Both", "Civilian"]
+sides = [west, east, resistance]
+flags = ["\flags\usa.jpg", "\flags\ussr.jpg", "\flags\FIABlack.jpg"]
+
+
+siPlayer = -1
+giPlayer = -1
+groupPlayer = grpNull
+mhq = [objNull, objNull, objNull]
+costWorker = 400
+maxWorkers = 10
+rangeSupport = 20
+sendDelay = 1.0
+deleteUnitDelay = [5*60, 60] select dev
+maxFlightAltitude = 300
+costRepairMHQ = 20000
+blockTime = 60
+costRespawn = 0
+factorRepairCost = 0.1
+factorRepairTime = 0.02
+distMaxCC = 200
+indexUnitBuiltMsg = 0
+countUnitBuiltMsg = 5
+iInitNew = 99
+bShowGroups = false
+bShowInfo = false
+bShowMap = false
+
+; UPGRADES
+; upgDefs entry format: [sName, nCost, nMinutes]
+_type = 0
+upgDefs = []
+
+
+upgRadarAircraft = _type; upgDefs set [_type, ["Aircraft Radar", [5000, 100] select dev, [2, 0] select dev]]; _type=_type+1
+
+upgRadarArtillery = _type; upgDefs set [_type, ["Artillery Radar", [5000, 100] select dev, [2, 0] select dev]]; _type=_type+1
+
+upgWorkers = _type; upgDefs set [_type, ["Upgrade Workers", [5000, 100] select dev, [2, 0] select dev]]; _type=_type+1
+
+upgTownGroup = _type; upgDefs set [_type, ["Town Groups", [7500, 100] select dev, [1, 0] select dev]]; _type=_type+1
+
+upgTownGroupb = _type; upgDefs set [_type, ["Town Groups Armour", [15000, 100] select dev, [1, 0] select dev]]; _type=_type+1
+
+;upgmissilesATres = _type; upgDefs set [_type, ["AT missiles for Res planes", [8000, 100] select dev, [5, 0] select dev]]; _type=_type+1
+
+upgNumBuildings = _type; upgDefs set [_type, ["More Buildings", [15000, 100] select dev, [3, 0] select dev]]; _type=_type+1
+
+upgSatCam = _type; upgDefs set [_type, ["Satellite Camera", [30000, 100] select dev, [5, 0] select dev]]; _type=_type+1
+
+upgLongWeaponRange = _type; upgDefs set [_type, ["2500m Range Weapons", [40000, 100] select dev, [2, 0] select dev]]; _type=_type+1
+
+; upgMatrix entry format: 0=not begun, 1=in progress, 2=upgraded
+upgMatrix = [ [], [] ]
+_index = 0
+{ (upgMatrix select si0) set [_index, 0]; (upgMatrix select si1) set [_index, 0]; _index=_index+1} foreach upgDefs
+
+; SCORE
+_type = 0
+scoreDefs = []
+scInfantry = _type; scoreDefs set [_type, ["Infantry",1]]; _type=_type+1
+scVehicle = _type; scoreDefs set [_type, ["Vehicle",1]]; _type=_type+1
+scMHQ = _type; scoreDefs set [_type, ["MHQ",10]]; _type=_type+1
+scStruct = _type; scoreDefs set [_type, ["Struct",10]]; _type=_type+1
+scTown = _type; scoreDefs set [_type, ["Town",8]]; _type=_type+1
+
+_scoreStart = []
+_scoreStart resize (count scoreDefs)
+_index = 0
+{ _scoreStart set [_index, 0]; _index=_index+1 } foreach _scoreStart
+
+buildingsInUse = []
+
+groupMatrix = [[], [], []]
+groupNameMatrix = [[], []]
+groupAiMatrix = [[], []]
+groupMoneyMatrix = [[], []]
+groupUnitsBuildingMatrix = [[], []]
+groupScoreMatrix = [[], []]
+groupCommander = [grpNull, grpNull]
+giCO = [0, 0]
+
+callsigns = ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "Kilo", "November", "Yankee", "Zulu", "Two", "Three", "Buffalo", "Guardian", "Convoy", "Fox" ]
+_groups = []
+_groupNames = []
+
+_i = 0
+_c = count callsigns
+#SetGroupID
+  _si = si0
+  _groups = groupMatrix select _si
+  _groupNames = groupNameMatrix select _si
+  _group = format["Group%1%2", callsigns select _i, _si]
+  _test = format["%1 != grpNull", _group]
+  ? call _test : call format["%1 setGroupId [""%2"", ""GroupColor0""]", _group, callsigns select _i]; call format["_groups set [count _groups, %1]", _group]; call format["_groupNames set [count _groupNames, ""%1""]", callsigns select _i]
+
+  _si = si1
+  _groups = groupMatrix select _si
+  _groupNames = groupNameMatrix select _si
+  _group = format["Group%1%2", callsigns select _i, _si]
+  _test = format["%1 != grpNull", _group]
+  ? call _test : call format["%1 setGroupId [""%2"", ""GroupColor0""]", _group, callsigns select _i]; call format["_groups set [count _groups, %1]", _group]; call format["_groupNames set [count _groupNames, ""%1""]", callsigns select _i]
+
+  _i = _i + 1
+  ? _i < _c : goto "SetGroupID"
+
+_si = si0
+_i = 0
+_c = count (groupMatrix select _si)
+? _c == 0 : goto "Side0Empty"
+groupCommander set [_si, (groupMatrix select _si) select 0]
+#InitSide0Groups
+	(groupMoneyMatrix select _si) set [_i, 0]
+	(groupUnitsBuildingMatrix select _si) set [_i, 0]
+	(groupScoreMatrix select _si) set [_i, +_scoreStart]
+	_i = _i + 1
+	? _i < _c : goto "InitSide0Groups"
+#Side0Empty
+
+_si = si1
+_i = 0
+_c = count (groupMatrix select _si)
+? _c == 0 : goto "Side1Empty"
+groupCommander set [_si, (groupMatrix select _si) select 0]
+#InitSide1Groups
+	(groupMoneyMatrix select _si) set [_i, 0]
+	(groupUnitsBuildingMatrix select _si) set [_i, 0]
+	(groupScoreMatrix select _si) set [_i, +_scoreStart]
+	_i = _i + 1
+	? _i < _c : goto "InitSide1Groups"
+#Side1Empty
+
+[] exec "Common\InitPublicVariables.sqs"
+[] exec "Common\InitStructureTypes.sqs"
+[] exec "Common\InitUnitTypes.sqs"
+[] exec "Common\InitInfoMsgTypes.sqs"
+[] exec "Common\InitEquipmentTypes.sqs"
+
+; town descriptor indexes
+tdFlag = 0
+tdName = 1
+tdValue = 2
+tdSide = 3
+
+; init functions (stuff that return values)
+fAddSoldier = preprocessFile "Common\AddSoldier.sqf"
+fAddVehicle = preprocessFile "Common\AddVehicle.sqf"
+funcGetClosestTown = preprocessFile "Common\GetClosestTown.sqf"
+funcGetClosestEnemyTown = preprocessFile "Common\GetClosestEnemyTown.sqf"
+funcCalcDistanceToObject = preprocessFile "Common\CalcDistanceToObject.sqf"
+funcDistH = preprocessFile "Common\DistH.sqf"
+funcGetIndex = preprocessFile "Common\GetIndex.sqf"
+funcGetStructures = preprocessFile "Common\GetStructures.sqf"
+funcGetClosestStructure = preprocessFile "Common\GetClosestStructure.sqf"
+funcGetNearestStructure = preprocessFile "Common\GetNearestStructure.sqf"
+funcGetWorkingStructures = preprocessFile "Common\GetWorkingStructures.sqf"
+funcCalcUnitPlacementPosDir = preprocessFile "Common\CalcUnitPlacementPosDir.sqf"
+funcCountStructures = preprocessFile "Common\CountStructures.sqf"
+funcCountUnits = preprocessFile "Common\CountUnits.sqf"
+funcSort = preprocessFile "Common\Sort.sqf"
+funcGetNearbyVehicles = preprocessFile "Common\GetNearbyVehicles.sqf"
+funcGetClosestVehicle = preprocessFile "Common\GetClosestVehicle.sqf"
+funcGetRandomPos = preprocessFile "Common\GetRandomPos.sqf"
+funcVectorAdd = preprocessFile "Common\VectorAdd.sqf"
+funcVectorSub = preprocessFile "Common\VectorSub.sqf"
+funcVectorScale = preprocessFile "Common\VectorScale.sqf"
+funcVectorDot = preprocessFile "Common\VectorDot.sqf"
+funcVectorCross = preprocessFile "Common\VectorCross.sqf"
+funcVectorLength = preprocessFile "Common\VectorLength.sqf"
+funcVectorRot = preprocessFile "Common\VectorRot.sqf"
+funcGetClosestEnemyObject = preprocessFile "Common\GetClosestEnemyObject.sqf"
+funcGetClosestUnit = preprocessFile "Common\GetClosestUnit.sqf"
+funcGetRandomUnitType = preprocessFile "Common\GetRandomUnitType.sqf"
+funcGetUnitTypeFromObject = preprocessFile "Common\GetUnitTypeFromObject.sqf"
+funcGetStructTypeFromObject = preprocessFile "Common\GetStructTypeFromObject.sqf"
+funcAddToUnitMatrix = preprocessFile "Common\AddToUnitMatrix.sqf"
+funcAddRearmData = preprocessFile "Common\AddRearmData.sqf"
+funcGetRearmData = preprocessFile "Common\GetRearmData.sqf"
+funcHASL = preprocessFile "Common\HASL.sqf"
+funcPosNearSea = preprocessFile "Common\PosNearSea.sqf"
+funcHighObjects = preprocessFile "Common\HighObjects.sqf"
+funcInForest = preprocessFile "Common\InForest.sqf"
+funcBaseArea = preprocessFile "Common\BaseArea.sqf"
+funcStartPos = preprocessFile "Common\StartPos.sqf"
+funcAreaFlat = preprocessFile "Common\AreaFlat.sqf"
+funcGetNearestRespawnObject = preprocessFile "Common\GetNearestRespawnObject.sqf"
+fSendTextMsg = preprocessFile "Common\SendTextMsg.sqf"
+fDebugLog = preprocessFile "Common\DebugLog.sqf"
+fGetHumanUnits = preprocessFile "Common\GetHumanUnits.sqf"
+
+; AI GROUP SETTINGS
+; setting definition entry format: [ name, [s0, s1, ...], default ]
+aiSettingDefs = []
+_type = 0
+
+aisRallyPoint = _type
+aiSettingDefs set [_type, ["Rally Point", ["none", "co6", "co7", "co8", "co9"], 0] ]
+_type = _type + 1
+
+aisPickupWait = _type
+aiSettingDefs set [_type, ["Pickup Wait", ["dont use transports", "2min", "4min", "6min", "8min", "10min", "12min", "14min", "16min", "18min"], 1] ]
+_type = _type + 1
+
+aisWatch = _type
+aiSettingDefs set [_type, ["Watch", ["Scan", "N", "NE", "E", "SE", "S", "SW", "W", "NW"], 0] ]
+_type = _type + 1
+
+aisBuy = _type
+aiSettingDefs set [_type, ["Buy", ["none", "Mixed", "AT-Infantry", "Infantry-Mixed", "Armor Mixed", "Armor-Heavy", "M2a2/Bmp2-AT", "AA-Vehicles", "AA-Infantry", "Saboteurs", "Transp-Land", "Transp-Air", "Support Vehicles"], 0] ]
+_type = _type + 1
+
+aisKeep = _type
+aiSettingDefs set [_type, ["Keep", ["$0", "$1000", "$2000", "$3000", "$4000", "$5000", "$6000", "$7000", "$8000", "$9000"], 1] ]
+_type = _type + 1
+
+_default = []
+{ _default set [count _default, _x select 2] } foreach aiSettingDefs
+
+; current setting entry format: [orderID, orderType, [param0, param1, ...]]
+aiSetting = [ [], [] ]
+_si = si0; _list = aiSetting select _si; { _list set [ count _list, +_default ] } foreach (groupMatrix select _si)
+_si = si1; _list = aiSetting select _si; { _list set [ count _list, +_default ] } foreach (groupMatrix select _si)
+
+
+; AI GROUP ORDERS
+; order def entry format: [name, params, script]
+; order def param format: [name, countFunc, toTextFunc]
+funcDirIndexToText = "[""All"", ""N"", ""NE"", ""E"", ""SE"", ""S"", ""SW"", ""W"", ""NW""] select _this"
+orderDefs = []
+_type = 0
+
+orderTakeTowns = _type
+orderDefs set [_type, ["Take Towns", [], "Order TakeTowns.sqs"] ]
+_type = _type + 1
+
+orderTakeHoldTowns = _type
+_param0 = ["Hold Distance", "5", "format [""<%1m"", 500*(_this+1)]"]
+_param1 = ["Hold Time", "10", "format [""%1min"", 5*(_this+1)]"]
+orderDefs set [_type, ["Take Hold Towns", [_param0, _param1], "Order TakeHoldTowns.sqs"] ]
+_type = _type + 1
+
+orderHoldTown = _type
+_param0 = [ "Town", "count towns", "(towns select _this) select 1" ]
+_param1 = [ "Defend Distance", "10", "format [""%1m"", 50*(_this+1)]" ]
+_param2 = [ "Defend Direction", "9", funcDirIndexToText ]
+orderDefs set [_type, ["Hold Town", [_param0, _param1, _param2], "Order HoldTown.sqs"] ]
+_type = _type + 1
+
+orderGuardArea = _type
+_param0 = [ "Waypoint", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+_param1 = [ "Defend Distance", "10", "format [""%1m"", 50*(_this+1)]" ]
+_param2 = [ "Defend Direction", "9", funcDirIndexToText ]
+orderDefs set [_type, ["Guard Area", [_param0, _param1, _param2], "Order GuardArea.sqs"] ]
+_type = _type + 1
+
+orderGuardLine = _type
+_param0 = [ "Waypoint", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+_param1 = [ "Waypoint", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+orderDefs set [_type, ["Guard Line", [_param0, _param1], "Order GuardLine.sqs"] ]
+_type = _type + 1
+
+orderPatrolArea = _type
+_param0 = [ "Waypoint", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+_param1 = [ "Patrol Radius", "10", "format [""%1m"", 50*(_this+1)]" ]
+orderDefs set [_type, ["Patrol Area", [_param0, _param1], "Order PatrolArea.sqs"] ]
+_type = _type + 1
+
+orderPatrolLine = _type
+_param0 = [ "Waypoint", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+_param1 = [ "Waypoint", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+orderDefs set [_type, ["Patrol Line", [_param0, _param1], "Order PatrolLine.sqs"] ]
+_type = _type + 1
+
+orderAdvance = _type
+_param0 = [ "Waypoint", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+_param1 = [ "Meters/minute", "10", "format [""%1m"", 100*(_this+1)]" ]
+orderDefs set [_type, ["Advance", [_param0, _param1], "Order Advance.sqs"] ]
+_type = _type + 1
+
+orderTransportDuty = _type
+_param0 = [ "Pickup Pos", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+_param1 = [ "Eject Pos", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+_param2 = [ "Eject Distance", "5", "format [""%1m"", 200*(_this+1)]" ]
+orderDefs set [_type, ["Transport Duty", [_param0, _param1, _param2], "Order TransportDuty.sqs"] ]
+_type = _type + 1
+
+orderMineLine = _type
+_param0 = [ "Waypoint", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+_param1 = [ "Waypoint", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+orderDefs set [_type, ["Mine Line", [_param0, _param1], "Order MineLine.sqs"] ]
+_type = _type + 1
+
+orderDisableMines = _type
+_param0 = [ "Waypoint", "count (wpCO select siPlayer)", "_posRelTown = ((wpCO select siPlayer) select _this) call funcCalcTownDirDistFromPos; format[""co%1 %2"", _this, [_posRelTown, """"] select ((((wpCO select siPlayer) select _this) select 0) == -1)]" ]
+orderDefs set [_type, ["Disable Mines", [_param0], "Order DisableMines.sqs"] ]
+_type = _type + 1
+
+; order entry format: [orderID, orderType, [param0, param1, ...]]
+orderMatrix = [ [], [] ]
+_si = si0; _gi = 0; { (orderMatrix select _si) set [ _gi, [0, orderTakeHoldTowns, [3, 1]] ]; _gi = _gi + 1 } foreach (groupMatrix select _si)
+_si = si1; _gi = 0; { (orderMatrix select _si) set [ _gi, [0, orderTakeHoldTowns, [3, 1]] ]; _gi = _gi + 1 } foreach (groupMatrix select _si)
+
+; WAYPOINTS
+countWPPlayer = 10
+countWPCO = 10
+wpCO = [[],[]]
+_i = 0; while "_i < countWPCO" do { (wpCO select si0) set [_i, [-1,-1]]; _i = _i + 1 } 
+_i = 0; while "_i < countWPCO" do { (wpCO select si1) set [_i, [-1,-1]]; _i = _i + 1 }
+
+; { _index = 0; while "_index < countWaypoints" do { (waypoint select _x) set [_index, []];  _index = _index + 1 } } foreach [si0, si1]
+
+; vehicleAttached format: [ [tug, [vehicleCenter, vehicleRight, vehicleLeft]], ...]
+tsTug = 0
+tsTugged = 1
+tsCenter = 0
+tsRight = 1
+tsLeft = 2
+vehicleAttached = []
+ttHeli = 0
+ttBoat = 1
+ttTruck = 2
+ttAPC = 3
+
+; game properties (see description.ext)
+
+
+? (param1 == 1):fixedStartPos = 1; Incomex = 1 
+? (param1 == 2):fixedStartPos = 1; Incomex = 2 
+? (param1 == 3):fixedStartPos = 2; Incomex = 1 
+? (param1 == 4):fixedStartPos = 3; Incomex = 1 
+;? (param1 == 5):fixedStartPos = 1; Incomex = 1 
+;? (param1 == 6):fixedStartPos = 1; Incomex = 2 
+
+;timeLimit = 3*60*60
+
+maxGroupSize = (param2 % 10000) % 100
+
+viewDistance = (param2 % 10000) - maxGroupSize
+
+;0 or 1 (low or high)
+PricingMode = ((param2 - maxGroupSize - viewDistance)/10000) - 1
+
+;? (param1 == 2) && (PricingMode == 0) && (maxGroupSize == 12):fixedStartPos = 1; Incomex = 2 ; maxGroupSize = 10
+
+setViewDistance viewDistance
+
+;player globalchat format ["fixedStartPos=%1, timeLimit=%2, maxGroupSize=%3, viewDistance=%4" ,fixedStartPos, timeLimit, maxGroupSize, viewDistance]
+
+; MESSAGE HANDLERS (SERVER AND CLIENTS)
+[] exec "Common\MsgScore.sqs"
+; [] exec "Common\MsgBuildingInUse.sqs"
+; [] exec "Common\MsgBuildingNotInUse.sqs"
+[] exec "Common\MsgAIGroupOrder.sqs"
+[] exec "Common\MsgAIGroupSetting.sqs"
+[] exec "Common\MsgWaypoint.sqs"
+[] exec "Common\MsgVehicleAttached.sqs"
+[] exec "Common\MsgDetachVehicle.sqs"
+[] exec "Common\MsgVehicleDetached.sqs"
+[] exec "Common\MsgLock.sqs"
+[] exec "Common\MsgUnlock.sqs"
+[] exec "Common\MsgVehicleMagsRemove.sqs"
+[] exec "Common\MsgVehicleMagsAdd.sqs"
+[] exec "Common\MsgEjectUnit.sqs"
+[] exec "Common\MsgUnitBuilt_0.sqs"
+[] exec "Common\MsgUnitBuilt_1.sqs"
+[] exec "Common\MsgUnitBuilt_2.sqs"
+[] exec "Common\MsgUnitBuilt_3.sqs"
+[] exec "Common\MsgUnitBuilt_4.sqs"
+[] exec "Common\MsgObjectRepaired.sqs"
+
+
+; SORT TOWNS
+_c = count towns
+_i = 0
+#SortTownsNextI
+  _j = _i + 1
+  #SortTownsNextJ
+		_townI = towns select _i;
+		_townJ = towns select _j;
+		? ((getPos (_townI select tdFlag)) select 1) > ((getPos (_townJ select tdFlag)) select 1) : goto "SortTownsSkip"
+		towns set [_i, _townJ];
+		towns set [_j, _townI];
+    #SortTownsSkip
+    _j = _j + 1
+    ? _j < _c : goto "SortTownsNextJ"
+
+  _i = _i + 1
+  ? _i < (_c - 1) : goto "SortTownsNextI"
+
+; calc map center by using town positions
+_posX = 0
+_posY = 0
+{ _posX = _posX + ((getPos (_x select tdFlag)) select 0); _posY = _posY + ((getPos (_x select tdFlag)) select 1) } foreach towns
+posCenter = [_posX/_c, _posY/_c]
+
+
+townGroups = [ [], [] ]
+timeReinforceTown = 3*60
+
+? (local LocalServerObject): [] exec "Server\InitServer.sqs"
+? !(local LocalServerObject): [] exec "Player\InitClient.sqs"
+
+;player globalchat "init.sqs Exit"

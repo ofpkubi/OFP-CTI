@@ -1,0 +1,26 @@
+
+_index = 0
+_groups = groupMatrix select si0
+_count = count _groups
+? (_count == 0): goto "ClientCheckGroupSide0Empty"
+#ClientCheckGroupSide0
+	_leader = leader (_groups select _index)
+	? (player == _leader): [_leader, si0, _index] exec "Player\InitPlayer.sqs"
+	_index = _index + 1
+	? (_index < _count): goto "ClientCheckGroupSide0"
+#ClientCheckGroupSide0Empty
+
+_index = 0
+_groups = groupMatrix select si1
+_count = count _groups
+? (_count == 0): goto "ClientCheckGroupSide1Empty"
+#ClientCheckGroupSide1
+	_leader = leader (_groups select _index)
+	? (player == _leader): [_leader, si1, _index] exec "Player\InitPlayer.sqs"
+	_index = _index + 1
+	? (_index < _count): goto "ClientCheckGroupSide1"
+#ClientCheckGroupSide1Empty
+
+? player == Spec0 : Spec0 exec "Player\InitSpectator.sqs"
+? player == Spec1 : Spec1 exec "Player\InitSpectator.sqs"
+

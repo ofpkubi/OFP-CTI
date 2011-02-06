@@ -1,0 +1,49 @@
+; args: [vehicle, si]
+
+_vehicle = _this select 0
+_flugrichtung = getdir _vehicle;
+_si = _this select 1
+
+_cost = 800
+_classchute = "ParachuteC"
+? _si == si0 : _classmine = "MineE"
+? _si == si1 : _classmine = "MineE"
+
+_pos = getpos _vehicle
+
+? _pos select 2 < 30 : player GroupChat "Vehicle has to be above 30m"; exit
+
+_money = (groupMoneyMatrix select siPlayer) select giPlayer
+? _cost > _money : player GroupChat format["Not enough money for minedrop. ($%1 needed)", _cost]; exit
+
+player GroupChat "Mine line released"
+[_cost] exec "Player\SendMoneySpent.sqs"
+
+_posBelowVeh = [_pos select 0, _pos select 1, (_pos select 2) - 7];
+_chute = "ParachuteC" createVehicle _posBelowVeh;
+_chute setpos _posBelowVeh;
+_cargo = "Vysilacka" createVehicle _posBelowVeh;
+
+#drop
+_newpos = [_pos select 0, _pos select 1, ((getpos _chute) select 2) - 0.2];
+_chute setPos _newpos;
+_cargo setPos _newpos;
+~0.05
+?((getpos _chute) select 2) > 1 : goto "drop"
+
+? !alive _cargo : exit
+
+_posErsteMine = getpos _cargo;
+deleteVehicle _cargo;
+
+_anzahlDerMinen = 10;
+_abstand = 4;
+_counter = 0;
+
+#create
+~2
+_posNeueMine = [(_posErsteMine select 0) + _abstand * _counter * sin(_flugrichtung),(_posErsteMine select 1) + _abstand * _counter * cos(_flugrichtung),0];
+_classmine createVehicle _posNeueMine;
+if (_counter < _anzahlDerMinen - 1) then { _counter = _counter + 1; goto "create"; };
+
+player GroupChat format["Mine line dropped sucessfully at: %1 Cost: $%2", _pos call funcCalcMapPos, _cost]

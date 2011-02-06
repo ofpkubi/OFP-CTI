@@ -1,0 +1,14 @@
+; args: [typeUnit, driver, gunner, commander, si, giJoin, giBuyer, oFactory]
+
+_type = _this select 0
+_driver = _this select 1
+_gunner = _this select 2
+_commander = _this select 3
+_si = _this select 4
+_giJoin = _this select 5
+_giBuyer = _this select 6
+_factory = _this select 7
+
+? isNull _factory : exit
+
+[_factory, _type, _driver, _gunner, _commander, _si, _giJoin, _giBuyer] exec "Server\AddToUnitQueue.sqs"

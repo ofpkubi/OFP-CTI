@@ -1,0 +1,15 @@
+; args: [vehicle, unit, actionID]
+
+_mhq = _this select 0
+
+? (_unit != player): Exit
+
+_si = siPlayer
+_gi = giPlayer
+
+_money = (groupMoneyMatrix select _si) select _gi
+? (_money < costRepairMHQ): hint format["Not enough money.\nCost: $%1.\nYou need $%2 more.", costRepairMHQ, costRepairMHQ - _money]; Exit
+
+pvRepairMHQ = _gi + 18*_si
+PublicVariable "pvRepairMHQ"
+

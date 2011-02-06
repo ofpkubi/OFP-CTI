@@ -1,0 +1,12 @@
+; args: [unit]
+
+_unit = _this select 0
+
+_money = (groupMoneyMatrix select siPlayer) select giPlayer
+
+? (_money < costWorker): hint "Not enough money"; Exit
+
+? !(alive (mhq select siPlayer)) : hint "MHQ Destroyed"; exit
+
+pvAddWorker = siPlayer; PublicVariable "pvAddWorker"
+

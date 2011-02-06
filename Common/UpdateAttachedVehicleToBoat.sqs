@@ -1,0 +1,67 @@
+; args: [vehicle, boat, index, slot, gi, si]
+
+_vehicle = _this select 0
+_boat = _this select 1
+_tugindex = _this select 2
+_tugslot = _this select 3
+_gi = _this select 4
+_si = _this select 5
+
+? (_tugslot == tsCenter): _attachDir = -180; _attachDist = 40
+? (_tugslot == tsRight): _attachDir = -210; _attachDist = 40
+? (_tugslot == tsLeft): _attachDir = -150; _attachDist = 40
+
+_speedDamage = 12
+
+_pos = getPos _vehicle
+_vehicle setPos [-1000, -1000, 10]
+_vehicle setVelocity [0, 0, 2]
+~0.05
+_vehicle setPos [_pos select 0, _pos select 1, (_pos select 2) + 2]
+_vehicle setVelocity [0,0,2]
+
+#Update
+	~0.1
+	_posBoat = getPos _boat
+	_dirBoat = getDir _boat
+	_dirVehicle = getDir _vehicle
+	_posAttach = [(_posBoat select 0) + _attachDist*sin(_dirBoat+_attachDir), (_posBoat select 1) + _attachDist*cos(_dirBoat+_attachDir), 0]
+	
+	_vDisp = [_posAttach, getPos _vehicle] call funcVectorSub
+	_vDispLength = _vDisp call funcVectorLength
+	
+	_vVelAdd = [(_vDisp select 0)/5, (_vDisp select 1)/5, _vDisp select 2]
+	_alt = (getPos _vehicle) select 2
+	_vVelAdd set [2, 2 - _alt]
+
+	_velBoat = velocity _boat
+	_velVehicle = velocity _vehicle
+	; _speedDiffHorz = ([[_velVehicle select 0, _velVehicle select 1], [_velBoat select 0, _velBoat select 1]] call funcVectorSub) call funcVectorLength
+	; ? _speedDiffHorz > _speedDamage: _damage = _speedDiff/(2*_speedDamage); _vehicle setDamage (_damage + damage _vehicle); goto "Abort"
+  ? ([getPos _boat, getPos _vehicle] call funcDistH) > 2*_attachDist : goto "Abort"
+
+	_dirDiff = _dirVehicle - _dirBoat
+	? (_dirDiff > 180): _dirDiff = _dirDiff - 360
+	? (_dirDiff < -180): _dirDiff = _dirDiff + 360
+	? (_dirDiff > 1): _vehicle setDir (-1 + getDir _vehicle)
+	? (_dirDiff < -1): _vehicle setDir (1 + getDir _vehicle)
+	_vehicle setVelocity ([[velocity _boat, 0.8] call funcVectorScale, _vVelAdd] call funcVectorAdd)
+	
+	;player globalchat format["posZ boat = %1, posZ vehicle = %2", (getPos _boat) select 2, (getPos _vehicle) select 2]
+
+	? isNull(((vehicleAttached select _tugindex) select tsTugged) select _tugslot) || !(alive _boat) || !(alive _vehicle) || !(local _vehicle): goto "Abort"
+	goto "Update"
+
+#Abort
+	((vehicleAttached select _tugindex) select tsTugged) set [_tugslot, objNull]
+	[_vehicle, _gi, _si] exec "Common\SendVehicleDetached.sqs"
+
+	_pos = getPos _vehicle
+	_vehicle setPos [-1000, -1000, 10]
+	_vehicle setVelocity [0, 0, 2]
+	~0.05
+	_vehicle setPos _pos
+	_velVehicle = velocity _vehicle
+	_velVehicle set [2, (_velVehicle select 2) + 2]
+	_vehicle setVelocity _velVehicle
+	Exit

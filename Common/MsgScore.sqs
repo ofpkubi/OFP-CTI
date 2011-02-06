@@ -1,0 +1,29 @@
+#Start
+
+@(pvScore != -1)
+
+? (pvGameover != -1): Exit
+
+_value = pvScore
+pvScore = -1
+
+_score = _value % 1000
+_value = _value - _score
+
+_class = (_value % (1000*10))/1000
+_value = _value - _class*1000
+
+_gi = (_value % (1000*10*18))/(1000*10)
+_value = _value - _gi*(1000*10)
+
+_si = _value/(1000*10*18)
+
+;player globalchat format["MsgScore.sqs: _si=%1, _gi=%2, _score=%3, _class=%4", _si, _gi, _score, _class]
+
+(scoreMoney select _si) set [_gi, ((scoreMoney select _si) select _gi) + _score]
+
+_score = (((groupScoreMatrix select _si) select _gi) select _class) + _score
+
+((groupScoreMatrix select _si) select _gi) set [_class, _score]
+
+goto "Start"

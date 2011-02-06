@@ -1,0 +1,273 @@
+; args: [si]
+
+_si = _this select 0
+
+
+? _si == siCiv : goto "StartSpectator"
+
+_textSide = sideNames select _si
+_siEnemy = siEnemy select _si
+
+#Start
+_groups = groupMatrix select siPlayer
+_groupNames = groupNameMatrix select siPlayer
+_count = count _groups
+
+_ids = []
+_id = 0; while "_id <= 12" do { _ids set [_id, format["%1 %2:%3", _textSide, _groupNames select giPlayer, _id] ]; _id = _id + 1 }
+
+#Update
+	~0.5
+
+	? (0 == count ([siPlayer, stradar] call funcGetWorkingStructures)): goto "HideAll"
+
+	; LEADERS
+	_index = 0
+	{ _leader=leader _x; _markerType= (["Marker","Dot"] select (alive _leader)); _marker=Format ["%1%2", _groupNames select _index, _si]; _marker setMarkerPos getPos _leader; _marker setMarkerType _markerType; _index = _index + 1} foreach _groups
+
+  ; PLAYERS NUMBERED AI
+  ? !bNumberedAI : { format["PlayerUnit_%1", _x] setMarkerPos hiddenMarkerPos } foreach [2,3,4,5,6,7,8,9,10,11,12]; goto "SkipNumberedAI"
+  _units = (units groupPlayer) - [player]
+  _id = 2
+  _i = 0
+  _c = count _units
+  #CheckID
+    _marker = format["PlayerUnit_%1", _id]
+    ? !(_i < _c) : _marker setMarkerPos hiddenMarkerPos; goto "CheckNextID"
+    
+    _ai = _units select _i
+    _text = format["%1", _ai]
+    if ( _text == (_ids select _id) ) then { _marker setMarkerPos getPos _ai; _i = _i + 1 } else { _marker setMarkerPos hiddenMarkerPos }
+    
+    #CheckNextID
+    _id = _id + 1
+    ? _id <= 12 : goto "CheckID"
+  #SkipNumberedAI
+
+  ; GROUP MEMBER MARKERS
+  _gi = 0
+  _countGroups = count (groupMatrix select siPlayer)
+  #CheckGroup
+	  _group = (groupMatrix select siPlayer) select _gi
+	  _units = units _group - [leader _group]
+	  _count = count _units
+    _index = 0
+    #CheckAI
+  		_marker = Format["GroupUnit_%1_%2_%3", siPlayer, _gi, _index]
+  		? _gi == giPlayer && bNumberedAI : _marker setMarkerPos hiddenMarkerPos; goto "CheckNextAI"
+  		? (_index < _count) && (_gi == giPlayer || giMarkersAI == _gi || giMarkersAI == _countGroups): _ai = _units select _index; _marker setMarkerPos getPos _ai; goto "CheckNextAI"
+	    _marker setMarkerPos hiddenMarkerPos
+  		#CheckNextAI
+	    _index = _index + 1
+	    ? (_index < 11): goto "CheckAI"
+
+	  #CheckNextGroup
+	  _gi = _gi + 1
+	  ? (_gi < _countGroups): goto "CheckGroup"
+
+  goto "SkipTownGroups"
+  ; TOWN UNIT MARKERS
+  _gi = 0
+  _countTownGroups = count (townGroups select siPlayer)
+  #CheckTownGroup
+	  _group = (townGroups select siPlayer) select _gi
+	  _units = units _group
+	  _count = count _units
+    _index = 0
+    #CheckTownAI
+  		_marker = Format["TownUnit_%1_%2_%3", siPlayer, _gi, _index]
+  		? (_index < _count) && giMarkersAI == _countGroups : _ai = _units select _index; _marker setMarkerPos getPos _ai; goto "CheckNextTownAI"
+	    _marker setMarkerPos hiddenMarkerPos
+  		#CheckNextTownAI
+	    _index = _index + 1
+	    ? (_index < 12): goto "CheckTownAI"
+
+	  _gi = _gi + 1
+	  ? (_gi < _countTownGroups): goto "CheckTownGroup"
+  #SkipTownGroups
+  
+	; VEHICLES OWN
+	_i = 0
+	#CheckVehicleOwn
+		? !(_i<maxVehicleMarkers) : goto "VehiclesOwnDone"
+		_v = (vehicleMarkerMapping select _si) select _i
+		_m = format["Vehicle_%1_%2", _si, _i]
+		? !(alive _v) && _v != (mhq select _si) : _m setMarkerPos hiddenMarkerPos; goto "CheckNextVehicleOwn"
+		_m setMarkerPos getPos _v
+		
+		#CheckNextVehicleOwn
+	  _i=_i+1	
+		goto "CheckVehicleOwn"
+	#VehiclesOwnDone
+
+	? (2 != (upgMatrix select siPlayer) select upgRadarAircraft): goto "Update"
+
+	; VEHICLES ENEMY
+	_i = 0
+	#CheckVehicleEnemy
+		? !(_i<maxVehicleMarkers) : goto "VehiclesEnemyDone"
+		_v = (vehicleMarkerMapping select _siEnemy) select _i
+		_m = format["Vehicle_%1_%2", _siEnemy, _i]
+		? !(alive _v) : _m setMarkerPos hiddenMarkerPos; goto "CheckNextVehicleEnemy"
+		? 50 > ((getPos _v) select 2) : _m setMarkerPos hiddenMarkerPos; goto "CheckNextVehicleEnemy"
+		_inrange = false
+		_radars = [_si, stradar] call funcGetWorkingStructures
+		{ if ((_v distance _x) < 10000) then { _inrange = true } } foreach _radars
+		? !_inrange: _marker setMarkerPos hiddenMarkerPos; goto "CheckNextVehicleEnemy"
+		_m setMarkerPos getPos _v
+		#CheckNextVehicleEnemy
+	  _i=_i+1	
+		goto "CheckVehicleEnemy"
+	#VehiclesEnemyDone
+
+	goto "Update"
+
+#StartSpectator
+
+_groupsSide0 = groupMatrix select si0
+_groupsSide1 = groupMatrix select si1
+_groupNamesSide0 = groupNameMatrix select si0
+_groupNamesSide1 = groupNameMatrix select si1
+
+#UpdateSpectator
+~0.5
+
+	; LEADERS
+	_index = 0
+	{ _leader=leader _x; _markerType= (["Marker","Dot"] select (alive _leader)); _marker=Format ["%1%2", _groupNamesSide0 select _index, si0]; _marker setMarkerPos getPos _leader; _marker setMarkerType _markerType; _index = _index + 1} foreach _groupsSide0
+	_index = 0
+	{ _leader=leader _x; _markerType= (["Marker","Dot"] select (alive _leader)); _marker=Format ["%1%2", _groupNamesSide1 select _index, si1]; _marker setMarkerPos getPos _leader; _marker setMarkerType _markerType; _index = _index + 1} foreach _groupsSide1
+
+  ; GROUP MEMBER MARKERS
+  _si = 0
+  #SpecCheckSide
+    _countGroups = count (groupMatrix select _si)
+    _gi = 0
+    #SpecCheckGroup
+	    _group = (groupMatrix select _si) select _gi
+	    _units = units _group - [leader _group]
+	    _count = count _units
+      _index = 0
+      #SpecCheckAI
+  		  _marker = Format["GroupUnit_%1_%2_%3", _si, _gi, _index]
+  		  ? (_index < _count): _ai = _units select _index; _marker setMarkerPos getPos _ai; goto "SpecCheckNextAI"
+	      _marker setMarkerPos hiddenMarkerPos
+  		  #SpecCheckNextAI
+	      _index = _index + 1
+	      ? (_index < 11): goto "SpecCheckAI"
+
+	    _gi = _gi + 1
+	    ? (_gi < _countGroups): goto "SpecCheckGroup"
+	  _si = _si + 1
+	  ? (_si < 2): goto "SpecCheckSide"
+
+  ; TOWN UNIT MARKERS
+  _si = 0
+  #SpecTownGroupCheckSide
+    _gi = 0
+    _countGroups = count (townGroups select _si)
+    #SpecCheckTownGroup
+	    _group = (townGroups select _si) select _gi
+	    _units = units _group
+	    _count = count _units
+      _index = 0
+      #SpecCheckTownAI
+  		  _marker = Format["TownUnit_%1_%2_%3", _si, _gi, _index]
+  		  ? (_index < _count) : _ai = _units select _index; _marker setMarkerPos getPos _ai; goto "SpecCheckNextTownAI"
+	      _marker setMarkerPos hiddenMarkerPos
+  		  #SpecCheckNextTownAI
+	      _index = _index + 1
+	      ? (_index < 12): goto "SpecCheckTownAI"
+	    _gi = _gi + 1
+	    ? (_gi < _countGroups): goto "SpecCheckTownGroup"
+	  _si = _si + 1
+	  ? (_si < 2): goto "SpecTownGroupCheckSide"
+
+	; VEHICLES SIDE 0
+	_si = si0
+	_i = 0
+	#CheckVehicleSide0
+		? !(_i<maxVehicleMarkers) : goto "VehiclesSide0Done"
+		_v = (vehicleMarkerMapping select _si) select _i
+		_m = format["Vehicle_%1_%2", _si, _i]
+		? !(alive _v) && _v != (mhq select _si) : _m setMarkerPos hiddenMarkerPos; goto "CheckNextVehicleSide0"
+		_m setMarkerPos getPos _v
+		
+		#CheckNextVehicleSide0
+	  _i=_i+1	
+		goto "CheckVehicleSide0"
+	#VehiclesSide0Done
+
+	; VEHICLES SIDE 1
+	_si = si1
+	_i = 0
+	#CheckVehicleSide1
+		? !(_i<maxVehicleMarkers) : goto "VehiclesSide1Done"
+		_v = (vehicleMarkerMapping select _si) select _i
+		_m = format["Vehicle_%1_%2", _si, _i]
+		? !(alive _v) && _v != (mhq select _si) : _m setMarkerPos hiddenMarkerPos; goto "CheckNextVehicleSide1"
+		_m setMarkerPos getPos _v
+		
+		#CheckNextVehicleSide1
+	  _i=_i+1	
+		goto "CheckVehicleSide1"
+	#VehiclesSide1Done
+
+	; VEHICLES RES
+	_si = siRes
+	_i = 0
+	#CheckVehicleRes
+		? !(_i<maxVehicleMarkers) : goto "VehiclesResDone"
+		_v = (vehicleMarkerMapping select _si) select _i
+		_m = format["Vehicle_%1_%2", _si, _i]
+		? !(alive _v) : _m setMarkerPos hiddenMarkerPos; goto "CheckNextVehicleRes"
+		_m setMarkerPos getPos _v
+		
+		#CheckNextVehicleRes
+	  _i=_i+1	
+		goto "CheckVehicleRes"
+	#VehiclesResDone
+
+	goto "UpdateSpectator"
+
+#HideAll
+
+	; LEADERS
+	_index = 0
+	{ _leader=leader _x; _marker=Format ["%1%2", _groupNames select _index, _si]; _marker setMarkerPos hiddenMarkerPos; _index = _index + 1} foreach _groups
+
+  ; GROUP MEMBER MARKERS
+  _gi = 0
+  _count = count _groups
+  #HideUnitMarkersGroup
+    _index = 0
+    #HideUnitMarker
+	    Format["GroupUnit_%1_%2_%3", siPlayer, _gi, _index] setMarkerPos hiddenMarkerPos
+
+	    _index = _index + 1
+	    ? (_index < 11): goto "HideUnitMarker"
+
+	  _gi = _gi + 1
+	  ? _gi < _count : goto "HideUnitMarkersGroup"
+
+  ; TOWN UNIT MARKERS
+  _gi = 0
+  _c = count (townGroups select siPlayer)
+  #HideTownUnitMarkersGroup
+    _index = 0
+    #HideTownUnitMarker
+	    Format["TownUnit_%1_%2_%3", siPlayer, _gi, _index] setMarkerPos hiddenMarkerPos
+
+	    _index = _index + 1
+	    ? (_index < 12): goto "HideTownUnitMarker"
+
+	  _gi = _gi + 1
+	  ? _gi < _c : goto "HideTownUnitMarkersGroup"
+
+	; VEHICLES OWN
+	_i=0; { _m = format["Vehicle_%1_%2", _si, _i]; _m setMarkerPos hiddenMarkerPos; _i=_i+1 } foreach (vehicleMarkerMapping select _si)
+
+	; VEHICLES ENEMY
+	_i=0; { _m = format["Vehicle_%1_%2", _siEnemy, _i]; _m setMarkerPos hiddenMarkerPos; _i=_i+1 } foreach (vehicleMarkerMapping select _siEnemy)
+
+	goto "Update"

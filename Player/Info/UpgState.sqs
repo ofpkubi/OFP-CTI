@@ -1,0 +1,24 @@
+; args: [params]
+
+_value = _this select 0
+
+_upg = (_value % (100))
+_value = _value - _upg
+
+_state = (_value % (100*3))/(100)
+_value = _value - _state*(100)
+
+_si = _value/(100*3)
+
+;player globalchat format["_type=%1, _si=%2, _groupBuyer=%3", _type, _si, _groupBuyer]
+
+(upgMatrix select _si) set [_upg, _state]
+
+? (siPlayer == siCiv && _state == 2): format["%1 upgraded %2.", sideNames select _si, (upgDefs select _upg) select 0] exec "Player\LogSpectator.sqs"
+
+? (_si != siPlayer): Exit
+
+? (_state == 1): player sidechat format ["Upgrade Started: %1", (upgDefs select _upg) select 0]
+? (_state == 2): player sidechat format ["Upgrade Complete: %1", (upgDefs select _upg) select 0]
+
+

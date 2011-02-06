@@ -1,0 +1,45 @@
+#Start
+
+@(pvBuyUnit_Type != -1)
+
+_value = pvBuyUnit_Type
+_factory = pvBuyUnit_Factory
+
+pvBuyUnit_Type = -1
+
+_type = _value % 200
+_value = _value - _type
+
+_giJoin = (_value % (200*18))/200
+_value = _value - _giJoin*200
+
+_giBuyer = (_value % (200*18*18))/(200*18)
+_value = _value - _giBuyer*(200*18)
+
+_si = (_value % (200*18*18*2))/(200*18*18)
+_value = _value - _si*(200*18*18)
+
+_driver = (_value % (200*18*18*2*2))/(200*18*18*2)
+_value = _value - _driver*(200*18*18*2)
+
+_gunner = (_value % (200*18*18*2*2*2))/(200*18*18*2*2)
+_value = _value - _gunner*(200*18*18*2*2)
+
+_commander = (_value % (200*18*18*2*2*2*2))/(200*18*18*2*2*2)
+_value = _value - _commander*(200*18*18*2*2*2)
+
+_bVehicle = false
+? _type < maxUnitTypes : if (count ((unitDefs select _type) select udCrew) > 0) then { _bVehicle = true }
+
+? !(_bVehicle): _unitsToBuild = 1
+? (_bVehicle): _unitsToBuild = _driver; _unitsToBuild = _unitsToBuild + _gunner; _unitsToBuild = _unitsToBuild + _commander
+
+_unitsInProgress = ((groupUnitsBuildingMatrix select _si) select _giJoin)
+_size = (count units ((groupMatrix select _si) select _giJoin)) + _unitsInProgress
+? ((_unitsToBuild + _size) > maxGroupSize): [_type, _si, _giBuyer, _giJoin] exec "Server\Info\GroupFull.sqs"; goto "Start"
+
+? (isNull _factory || !(alive _factory)): player globalchat "TODO: send factory destroyed message"; goto "Start"
+
+[_factory, _type, _driver, _gunner, _commander, _si, _giJoin, _giBuyer] exec "Server\AddToUnitQueue.sqs"
+
+goto "Start"

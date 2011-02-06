@@ -1,0 +1,31 @@
+; args: [maxAltitude]
+private["_max","_LimitChoppers","_LimitPlanes", "_lowerlimit", "_planes", "_vehicle","_vel"];
+
+_max = _this select 0;
+_LimitChoppers = _max;
+_LimitPlanes = 900;
+_lowerlimit = _LimitChoppers;
+if(_LimitPlanes < _LimitChoppers) then { _lowerlimit = _LimitPlanes; };
+
+_planes = ["A10", "A10LGB", "Su25", "DVD_v2_Su25", "resz_Su25lgb", "resz_Cessna_W", "resz_Cessna_E", "resz_Cessna_G", "resz_F105", "resz_MiG27", "resz_Tu22M", "resz_F111" ];
+
+#Wait
+@ (((getPos player) select 2) > (_lowerlimit - 50 ))
+
+;player globalchat "player near max alt"
+
+#CheckAlt
+	~0.1
+	_vehicle = vehicle player;
+	if( (typeof _vehicle) in _planes) then { _max = _LimitPlanes; } else { _max = _LimitChoppers; };
+	_alt = (getPos _vehicle) select 2;
+
+	? (_alt < (_max)): goto "Wait"
+
+_vel = velocity _vehicle;
+_vel set [2, -5];
+_vehicle setVelocity _vel;
+
+;player globalchat "velocity set"
+
+goto "CheckAlt"

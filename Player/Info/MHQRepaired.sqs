@@ -1,0 +1,15 @@
+; args: [params]
+
+_value = _this select 0
+
+_si = _value
+
+? (siPlayer == siCiv): format["%1 MHQ repaired", sideNames select _si] exec "Player\LogSpectator.sqs"
+
+? (_si == siPlayer): _text = "Our MHQ has been repaired. At Last !!"; hint _text; player sidechat _text 
+ 
+;_pvmhqrep = pvmhqrepedw
+;_pvmhqrepb = pvmhqrepede
+;player globalchat format ["multiplierwest = %1 and multipliereast = %2", _pvmhqrep, _pvmhqrepb]
+
+exit

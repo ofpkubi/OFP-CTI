@@ -1,0 +1,14 @@
+; args: [target, ammo, whoFired]
+
+_target = _this select 0
+_ammo = _this select 1
+_source = _this select 2
+
+? (_source != player): Exit
+? !(_ammo in ["AA", "9K32"]): Exit
+
+_missile = nearestObject [_source, _ammo]
+
+deleteVehicle _missile
+
+hint "Locking AA on ground vehicles is not allowed.\nMissile deleted."

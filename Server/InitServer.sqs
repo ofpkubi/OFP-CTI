@@ -1,0 +1,142 @@
+;player globalchat "InitServer.sqs Entered"
+
+fBuildStruct = preprocessFile "Server\BuildStruct.sqf"
+funcRepairStructure = preprocessFile "Server\RepairStructure.sqf"
+funcCalcStructurePosDir = preprocessFile "Server\CalcStructurePosDir.sqf"
+funcCalcBuilderPosDir = preprocessFile "Server\CalcBuilderPosDir.sqf"
+funcGetIdleFactory = preprocessFile "Server\GetIdleFactory.sqf"
+funcGetFactoryWithEmptyQueue = preprocessFile "Server\GetFactoryWithEmptyQueue.sqf"
+funcGetSmallestAiGroup = preprocessFile "Server\GetSmallestAiGroup.sqf"
+funcMoneyAdd = preprocessFile "Server\MoneyAdd.sqf"
+funcMoneySpend = preprocessFile "Server\MoneySpend.sqf"
+funcMoneyTransfer = preprocessFile "Server\MoneyTransfer.sqf"
+funcGetAiGroupIds = preprocessFile "Server\GetAiGroupIds.sqf"
+funcWatch = preprocessFile "Server\Watch.sqf"
+funcMoveAI = preprocessFile "Server\MoveAI.sqf"
+
+busyInit = "call format[""busy%1%2 = []"", sideNames select _si, _gi]"
+busySet = "call format[""busy%1%2 set [count busy%1%2, _unit]"", sideNames select _si, _gi]"
+busyClear = "call format[""busy%1%2 = busy%1%2 - [_unit, objNull]"", sideNames select _si, _gi]"
+busyCheck = "call format[""_unit in busy%1%2"", sideNames select _si, _gi]"
+
+repairableStructureMatrix = [ [], [] ]
+structuresServer = []
+factoryQueues = [ [], [] ]
+gunMatrix = [ [], [] ]
+startMoney = [[40000, 40000],[80000, 80000]] select PricingMode
+? (dev): startMoney = [80000, 80000]
+startMoneyPlayer = [1000, 1000]
+? (dev): startMoneyPlayer = [20000, 20000]
+moneySpent = [0, 0]
+moneyRequest = [[],[]]
+indexMoneyMsg = 0
+countMoneyMsg = 10
+indexInfoMsg = 0
+countInfoMsg = 4
+qidNext = [0,0]
+maxQ = 100
+qidServer = [[],[]]
+qidCancel = [[],[]]
+
+timeCheckSupport = 120
+ratioAttackEnemy = ([0.75, 0.5] select dev)
+
+countQueueMsg = 5
+indexQueueAddMsg = 0
+indexQueueRemMsg = 0
+indexUnitAddMsg = 0
+
+scoreMoney = [[],[]]
+primStructsPlaced = []
+groupsPatrol = []
+
+; MESSAGE HANDLERS (SERVER ONLY)
+[] exec "Server\MsgBuildStructure.sqs"
+[] exec "Server\MsgUndo.sqs"
+[] exec "Server\MsgAddWorker.sqs"
+[] exec "Server\MsgBuyUnit.sqs"
+[] exec "Server\MsgCancelBuy.sqs"
+[] exec "Server\MsgMoneySpent.sqs"
+[] exec "Server\MsgGiveMoney.sqs"
+[] exec "Server\MsgUpgrade.sqs"
+[] exec "Server\MsgTransferCommand.sqs"
+
+? !(isNull player): forceMap true
+? !(isNull player): _si = si0; _index = 0; { _leader = leader _x; if (player == _leader ) then { [_leader, _si, _index] exec "Player\InitPlayer.sqs" }; _index = _index + 1 } foreach (groupMatrix select _si)
+? !(isNull player): _si = si1; _index = 0; { _leader = leader _x; if (player == _leader ) then { [_leader, _si, _index] exec "Player\InitPlayer.sqs" }; _index = _index + 1 } foreach (groupMatrix select _si)
+
+? !(isNull player) && (player == Spec0): Spec0 exec "Player\InitSpectator.sqs"
+? !(isNull player) && (player == Spec1): Spec1 exec "Player\InitSpectator.sqs"
+
+pingTimes = [[], []]
+blockedPlayers = [[], []]
+_si = si0; _gi = 0; { (pingTimes select _si) set [_gi, -1]; (blockedPlayers select _si) set [_gi, false]; _gi = _gi + 1} foreach (groupMatrix select _si)
+_si = si1; _gi = 0; { (pingTimes select _si) set [_gi, -1]; (blockedPlayers select _si) set [_gi, false]; _gi = _gi + 1} foreach (groupMatrix select _si)
+
+;game has begun after this pause
+~2
+
+; NOTE: locality of players must be determined after game start on server
+_index = 0
+_groups = groupMatrix select si0
+_groupsAI = []
+_count = count _groups
+? (_count == 0): goto "CheckGroupSide0Empty"
+#CheckGroupSide0
+	_leader = leader (_groups select _index)
+	? ( local _leader && !(player == _leader) ): _groupsAI set [count _groupsAI, group _leader]; [_leader, si0, _index] exec "Server\InitLeaderAI.sqs"
+	? !(local _leader): [group _leader, si0, _index] exec "Server\DetectPlayerDisconnect.sqs"
+  (scoreMoney select si0) set [_index, 0]
+	[si0, _index] exec "Server\UpdateLeader.sqs"
+	_index = _index + 1
+	? (_index < _count): goto "CheckGroupSide0"
+#CheckGroupSide0Empty
+groupAiMatrix set [si0, _groupsAI]
+
+_index = 0
+_groups = groupMatrix select si1
+_groupsAI = []
+_count = count _groups
+? (_count == 0): goto "CheckGroupSide1Empty"
+#CheckGroupSide1
+	_leader = leader (_groups select _index)
+	? ( local _leader && !(player == _leader) ): _groupsAI set [count _groupsAI, group _leader]; [_leader, si1, _index] exec "Server\InitLeaderAI.sqs"
+	? !(local _leader): [group _leader, si1, _index] exec "Server\DetectPlayerDisconnect.sqs"
+  (scoreMoney select si1) set [_index, 0]
+	[si1, _index] exec "Server\UpdateLeader.sqs"
+	_index = _index + 1
+	? (_index < _count): goto "CheckGroupSide1"
+#CheckGroupSide1Empty
+groupAiMatrix set [si1, _groupsAI]
+
+_spec0exists = false
+? !(isNull Spec0): _spec0exists = true
+if (_spec0exists && (local Spec0) && player != Spec0) then { Spec0 disableAI "TARGET"; Spec0 disableAI "AUTOTARGET"; Spec0 disableAI "MOVE"; deleteVehicle Spec0 }
+
+_spec1exists = false
+? !(isNull Spec1): _spec1exists = true
+if (_spec1exists && (local Spec1) && player != Spec1) then { Spec1 disableAI "TARGET"; Spec1 disableAI "AUTOTARGET"; Spec1 disableAI "MOVE"; deleteVehicle Spec1 }
+
+
+;pvDebugVars = true; PublicVariable "pvDebugVars"
+
+[] exec "Server\GenerateStartPositions.sqs"
+
+; send AI groups
+{ _gi = [_x, groupMatrix select si0] call funcGetIndex; [si0, _gi] exec "Server\Info\GroupIsAI.sqs" } foreach (groupAiMatrix select si0)
+{ _gi = [_x, groupMatrix select si1] call funcGetIndex; [si1, _gi] exec "Server\Info\GroupIsAI.sqs" } foreach (groupAiMatrix select si1)
+
+_si = si0
+? count (groupMatrix select _si) == count (groupAiMatrix select _si) : startMoney set [_si, 10*(startMoney select _si)]
+
+_si = si1
+? count (groupMatrix select _si) == count (groupAiMatrix select _si) : startMoney set [_si, 10*(startMoney select _si)]
+
+[] exec "Server\SendStartMoney.sqs"
+[si0] exec "Server\UpdateRespawnAI.sqs"
+[si1] exec "Server\UpdateRespawnAI.sqs"
+[] exec "Server\UpdateIncome.sqs"
+[] exec "Server\UpdateServer.sqs"
+[] exec "Server\SendPing.sqs"
+
+; TODO [] exec "\detector\start.sqs"

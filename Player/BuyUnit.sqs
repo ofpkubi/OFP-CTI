@@ -1,0 +1,23 @@
+; args: [nType, nDriver, nGunner, nCommander, giJoin, oFactory]
+
+;player globalchat format["_this=%1", _this]
+
+_type = _this select 0
+_driver = _this select 1
+_gunner = _this select 2
+_commander = _this select 3
+_giJoin = _this select 4
+_factory = _this select 5
+
+_value = _type
+_value = _value + (200)*_giJoin
+_value = _value + (200*18)*giPlayer
+_value = _value + (200*18*18)*siPlayer
+_value = _value + (200*18*18*2)*_driver
+_value = _value + (200*18*18*2*2)*_gunner
+_value = _value + (200*18*18*2*2*2)*_commander
+
+? !(isNull _factory): pvBuyUnit_Factory = _factory; PublicVariable "pvBuyUnit_Factory"
+pvBuyUnit_Type = _value; PublicVariable "pvBuyUnit_Type"
+
+

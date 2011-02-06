@@ -1,0 +1,45 @@
+; args: [vehicle, type, si, gi]
+
+_vehicle = _this select 0
+_type = _this select 1
+_si = _this select 2
+_gi = _this select 3
+
+; TEST
+; format["DEBUG: InitVehicle.sqs : _vehicle=%1", _vehicle] call fSendTextMsg
+
+; SERVER AND PLAYER
+
+_desc = unitDefs select _type
+
+clearMagazineCargo _vehicle
+clearWeaponCargo _vehicle
+
+_vehicle addEventHandler ["killed", { _this exec "Common\Event_VehicleDestroyed.sqs" }]
+[_vehicle, _si, _desc select udCost] exec "Common\EventAdd_VehicleHit.sqs"
+
+if ((_desc select udFactoryType) == stAir) then { _vehicle addEventHandler ["GetOut", { _this exec "Common\Event_GetOutHeli.sqs" } ] };
+
+? isNull player : goto "SkipClient"
+
+; PLAYER ONLY
+
+[_vehicle, _type, _si] call funcInitVehicleMarker
+
+_typeFactory = _desc select udFactoryType
+; ? (_typeFactory != stAir): _vehicle addEventHandler ["IncomingMissile" ,{_this exec "Player\Event IncomingMissile.sqs"}]
+? _typeFactory == stAir : _vehicle addEventHandler ["GetIn",{ _this exec "Player\Event GetIn Aircraft.sqs" }]; { if ((group _x) == groupPlayer) then { [_vehicle, "", _x] exec "Player\Event GetIn Aircraft.sqs" } } foreach (crew _vehicle)
+
+? !(_type in vUnlimitedRange) : _vehicle addEventHandler ["Fired",{ [_this select 0, nearestObject[_this select 0, _this select 4] ] exec "Player\LimitWeaponRange.sqs" }]
+
+? _type in (airTransport select si0) || _type in (airTransport select si1) || _type in (groundTransport select si0) || _type in (groundTransport select si1) : _vehicle addAction ["Eject Cargo", "Player\Action EjectCargo.sqs"]
+
+~0.3
+? _si == siPlayer && _gi == giPlayer : vehiclesPlayer set [count vehiclesPlayer, _vehicle]; if (count (crew _vehicle) == 0 && time > 30) then { _text = format ["Your empty %1 has arrived.", (unitDefs select _type) select udName ]; hint _text; player groupchat _text }
+
+#SkipClient
+
+? !(local LocalServerObject) : exit
+
+; SERVER ONLY
+

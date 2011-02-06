@@ -1,0 +1,18 @@
+; args: [params]
+
+_value = _this select 0
+
+_type = (_value % 20)
+_value = _value - _type
+
+_gi = (_value % (20*18))/(20)
+_value = _value - _gi*(20)
+
+_si = _value/(20*18)
+
+? _si != siPlayer : exit
+_group = (groupMatrix select _si) select _gi
+_nameGroup = (groupNameMatrix select _si) select _gi
+_nameOrder = (orderDefs select _type) select 0
+
+(leader _group) sidechat format["Order Acknowledged - %2", _nameOrder]

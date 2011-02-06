@@ -1,0 +1,36 @@
+; args [[object, ...], si]
+
+_object = (_this select 0) select 0
+_si = _this select 1
+
+_delay = 10
+
+_index = 0
+_count = count structuresServer
+
+#FindStructure
+
+	;player globalchat format ["structuresServer=%1", structuresServer]
+
+	_entry = structuresServer select _index
+	_objects = _entry select 0
+	_type = _entry select 1
+
+	? (_object in _objects): goto "DestroyOtherObjectsAndUpdate"
+
+	_index = _index + 1
+
+	? (_index < _count): goto "FindStructure"
+
+	goto "DeleteObject"
+	
+#DestroyOtherObjectsAndUpdate
+
+	{ _x setDamage 1 } foreach _objects
+
+	structuresServer set [_index, 0]; structuresServer = structuresServer - [0]
+
+#DeleteObject
+
+	~_delay
+	deleteVehicle _object

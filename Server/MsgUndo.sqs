@@ -1,0 +1,12 @@
+undoList = []
+
+#Start
+
+@!(isNull pvUndo)
+
+_group = pvUndo
+pvUndo = grpNull
+
+[_group] exec "Server\UndoStructure.sqs"
+
+goto "Start"

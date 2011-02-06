@@ -1,0 +1,13 @@
+; args: [unit, si]
+
+_unit = _this Select 0
+_si = _this Select 1
+
+_mags = magsRespawnPlayer select _si
+_weapons = weaponsRespawnPlayer select _si
+
+removeAllWeapons _unit
+{ _unit addMagazine  _x } forEach _mags
+{ _unit addWeapon _x } forEach _weapons
+{ _unit addWeapon _x } forEach weaponsCustom
+_unit selectWeapon (_weapons select 0)

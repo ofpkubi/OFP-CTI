@@ -1,0 +1,20 @@
+#Start
+
+@!(isNull pvMovingToSupport_Unit)
+
+_unit = pvMovingToSupport_Unit
+_support = pvMovingToSupport_Support
+
+pvMovingToSupport_Unit = objNull
+pvMovingToSupport_Support = objNull
+
+? (side _unit) != playerSide : goto "Start"
+
+_vehicle = vehicle _unit
+_type = _vehicle call funcGetUnitTypeFromObject
+_typeSupport = _support call funcGetUnitTypeFromObject
+? _type == -1 || _typeSupport == -1 : goto "Start"
+
+_msg = format["Moving to Support, %1 @ %2 -> %3 @ %4", (unitDefs select _type) select udName, (getPos _vehicle) call funcCalcMapPos, (unitDefs select _typeSupport) select udName, (getPos _support) call funcCalcMapPos ]
+_unit sidechat _msg
+goto "Start"

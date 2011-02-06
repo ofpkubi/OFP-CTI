@@ -1,0 +1,28 @@
+; args: [unit, type, si, gi]
+
+_unit = _this select 0
+_type = _this select 1
+_si = _this select 2
+_gi = _this select 3
+
+? !(alive _unit) : exit
+
+? local LocalServerObject : [_unit, _si, kaUnit, -1] exec "Server\UpdateKnowsAbout.sqs"
+
+? _type >= maxUnitTypes : _cost = (unitDefs select (utCustom select _si)) select udCost
+? _type < maxUnitTypes : _cost = (unitDefs select _type) select udCost
+? local LocalServerObject || local _unit : [_unit, _si, _cost] exec "Common\EventAdd_InfantryKilled.sqs"
+
+? !(local _unit) : exit
+
+~1
+doStop _unit
+
+? !(_unit in (units groupPlayer)) : exit
+
+; do stuff specific to players infantry
+
+? _type >= maxUnitTypes : [_unit, _type] exec "Player\EquipCustomSoldier.sqs"
+[_unit] exec "Player\UpdateDestroyEnemyObject.sqs"
+
+; TODO [_unit] exec "Player\CheckBoardVehicle.sqs"

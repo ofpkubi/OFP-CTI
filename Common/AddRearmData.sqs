@@ -1,0 +1,8 @@
+; args: [object]
+
+_object = _this select 0
+
+; wait for weapon/mag changes
+~5
+
+_object call funcAddRearmData

@@ -1,0 +1,20 @@
+#Start
+
+@(pvDetachVehicle != -1)
+
+_value = pvDetachVehicle
+_tug = pvDetachVehicleTug
+
+pvDetachVehicle = -1
+pvDetachVehicleTug = objNull
+
+? (isNull _tug): goto "Start"
+
+_slot = _value
+
+_index = 0
+_count = count vehicleAttached
+_found = false
+while "_index < _count && !_found" do { if (_tug == ((vehicleAttached select _index) select tsTug)) then { ((vehicleAttached select _index) select tsTugged) set [_slot, objNull]; _found = true } else { _index = _index + 1 } }
+
+goto "Start"

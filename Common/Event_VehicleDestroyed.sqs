@@ -1,0 +1,10 @@
+; args: [vehicle, ...]
+
+; player globalchat format ["Event_VehicleDestroyed.sqs: _this=%1", _this]
+
+_vehicle = _this select 0
+
+; ? _vehicle in mhq : [_siUnit, _siKiller, _giKiller] exec "Common\SendMHQDestroyed.sqs"; Exit
+? _vehicle in mhq : exit
+
+[_vehicle, deleteUnitDelay] exec "Common\DeleteUnitAfterDelay.sqs"
